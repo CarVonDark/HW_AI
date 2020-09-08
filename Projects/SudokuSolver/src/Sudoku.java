@@ -13,6 +13,7 @@ public class Sudoku {
 	private static int partitionSize = 0;
 
 	public static void main(String[] args) {
+		
 		String filename = args[0];
 		File inputFile = new File(filename);
 		Scanner input = null;
@@ -57,9 +58,17 @@ public class Sudoku {
 		}
 		if (count != boardSize * boardSize)
 			throw new RuntimeException("Incorrect number of inputs.");
-
+		
+		long startTime = System.currentTimeMillis();
+		
 		initiateDomains(vars, vals);
 		solve(vars, vals);
+		
+		long endTime = System.currentTimeMillis();
+
+		long duration = (endTime - startTime);  
+		
+		System.out.println("Duration: " + duration);
 
 		// Output
 		if (!done(vars)) {
@@ -75,22 +84,21 @@ public class Sudoku {
 		}
 		BufferedWriter writer;
 		try {
-			writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/" + 
-					filename.substring(0,filename.length()-4) + "Solution.txt")
-					);
+			writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/"
+					+ filename.substring(0, filename.length() - 4) + "Solution.txt"));
 			writerMA(writer, done(vars), vals);
-		} catch(IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void writerMA(BufferedWriter writer, boolean done, int[][] vals) throws IOException{
-		if(done) {
-			for(int i = 0; i < vals.length; i++) {
-				for(int j = 0; j < vals.length; j++) {
+	private static void writerMA(BufferedWriter writer, boolean done, int[][] vals) throws IOException {
+		if (done) {
+			for (int i = 0; i < vals.length; i++) {
+				for (int j = 0; j < vals.length; j++) {
 					writer.write(vals[i][j] + " ");
 				}
-				writer.write('\n');	
+				writer.write('\n');
 			}
 			writer.close();
 		} else {
@@ -101,26 +109,24 @@ public class Sudoku {
 
 	public static void solve(ArrayList<Variable> vars, int[][] vals) {
 		int index = 0;
-		while(index < vars.size()) {
+		while (index < vars.size()) {
 			Variable current = vars.get(index);
 			current.value++;
-			while(current.value <= boardSize) {
-				if(!current.domain.contains(current.value)) {
+			while (current.value <= boardSize) {
+				if (current.domainRow.contains(current.value) || current.domainCol.contains(current.value) 
+						|| current.domainBox.contains(current.value)) {
 					current.value++;
-					continue;
-				}
-				if(checkSingle(current, vals)) {
-					forwardChecking(current, vars);
-					vals[current.row][current.column] = current.value;
-					break;
 				} else {
-					current.value++;
+					break;
 				}
 			}
-			if(current.value > boardSize) {
-				if(index >= 1) {
+			boolean outOfBound = forwardChecking(current, vars);
+			vals[current.row][current.column] = current.value;
+			
+			if (outOfBound || current.value > boardSize) {
+				if (index >= 1) {
 					current.value = 0;
-					Variable prev = vars.get(index-1);
+					Variable prev = vars.get(index - 1);
 					forwardUnChecking(prev, vars);
 					vals[prev.row][prev.column] = 0;
 					index--;
@@ -132,7 +138,6 @@ public class Sudoku {
 			index++;
 		}
 	}
-	
 
 	public static boolean checkSingle(Variable current, int[][] vals) {
 		int rowBox = (int) (current.row / partitionSize) * partitionSize;
@@ -146,54 +151,76 @@ public class Sudoku {
 					return false;
 		return true;
 	}
-	
+
 	public static boolean done(ArrayList<Variable> vars) {
-		for(Variable v: vars)
-			if(v.value == 0 || v.value > 9)
+		for (Variable v : vars)
+			if (v.value == 0 || v.value > boardSize)
 				return false;
 		return true;
 	}
-	
-	public static void forwardChecking(Variable var, ArrayList<Variable> vars) {
-		for(Variable v: vars)
-			if((v.row/partitionSize == var.row/partitionSize && v.column/partitionSize == var.column/partitionSize)
-					|| v.column == var.column || v.row == var.row)
-				if(v.domain.contains(var.value))
-					v.domain.remove(var.value);
-	}
-	
-	public static void forwardUnChecking(Variable var, ArrayList<Variable> vars) {
-		for(Variable v: vars)
-			if((v.row/partitionSize == var.row/partitionSize && v.column/partitionSize == var.column/partitionSize)
-					|| v.column == var.column || v.row == var.row)
-					v.domain.add(var.value);
-	}
-	
-	public static void initiateDomains(ArrayList<Variable> vars, int[][] vals) {
-		for(Variable v: vars) {
-			HashSet<Integer> initialDomain = new HashSet<Integer>();
-			for(int i = 1; i <= boardSize; i++) {
-				initialDomain.add(i);
+
+	public static boolean forwardChecking(Variable var, ArrayList<Variable> vars) {
+		for (Variable v : vars) {
+			if ((v.row / partitionSize == var.row / partitionSize
+					&& v.column / partitionSize == var.column / partitionSize))
+				v.domainBox.add(var.value);
+			else if (v.row == var.row)
+				v.domainRow.add(var.value);
+			else if (v.column == var.column)
+				v.domainCol.add(var.value);
+			if(v.domainRow.size() == boardSize || v.domainRow.size() == boardSize || v.domainRow.size() == boardSize) {
+				return true;
 			}
-			for(int i = 0; i < boardSize; i++) 
-				for(int j = 0; j < boardSize; j++)
-					if((v.row/partitionSize == i/partitionSize && v.column/partitionSize == j/partitionSize) || v.column == j || v.row == i)
-						if(initialDomain.contains(vals[i][j])) {
-							initialDomain.remove(vals[i][j]);
-						}
-			v.domain = initialDomain;
+		}
+		return false;
+	}
+
+	public static void forwardUnChecking(Variable var, ArrayList<Variable> vars) {
+		for (Variable v : vars)
+			if ((v.row / partitionSize == var.row / partitionSize
+					&& v.column / partitionSize == var.column / partitionSize)) {
+				if (v.domainBox.contains(var.value))
+					v.domainBox.remove(var.value);
+			} else if (v.row == var.row) {
+				if (v.domainRow.contains(var.value))
+					v.domainRow.remove(var.value);
+			} else if (v.column == var.column) {
+				if (v.domainCol.contains(var.value))
+					v.domainCol.remove(var.value);
+			}
+	}
+
+	public static void initiateDomains(ArrayList<Variable> vars, int[][] vals) {
+		for (Variable v : vars) {
+			HashSet<Integer> initialDomainRow = new HashSet<Integer>();
+			HashSet<Integer> initialDomainCol = new HashSet<Integer>();
+			HashSet<Integer> initialDomainBox = new HashSet<Integer>();
+
+			for (int i = 0; i < boardSize; i++) {
+				for (int j = 0; j < boardSize; j++) {
+					if ((v.row / partitionSize == i / partitionSize && v.column / partitionSize == j / partitionSize))
+						initialDomainBox.add(vals[i][j]);
+					else if (v.row == i)
+						initialDomainRow.add(vals[i][j]);
+					else if (v.column == j)
+						initialDomainCol.add(vals[i][j]);
+				}
+			}
+			v.domainRow = initialDomainRow;
+			v.domainCol = initialDomainCol;
+			v.domainBox = initialDomainBox;
+			
 		}
 	}
-	
+
 	public static void printMa(int[][] vals) {
 		System.out.println();
-		for(int i = 0; i < vals.length; i++) {
-			for(int j = 0; j < vals.length; j++) {
+		for (int i = 0; i < vals.length; i++) {
+			for (int j = 0; j < vals.length; j++) {
 				System.out.print(vals[i][j] + " ");
 			}
 			System.out.println();
 		}
 	}
-	
 
 }
