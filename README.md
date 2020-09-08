@@ -1,1 +1,1 @@
-# CSSE413_ArtificialIntelligent
+# CSSE413_AI
