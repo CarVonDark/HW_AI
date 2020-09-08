@@ -1,3 +1,3 @@
 # CSSE413_AI
-Projects: 
-- Sudoku Solver 
+## Projects: 
+- ### Sudoku Solver 
