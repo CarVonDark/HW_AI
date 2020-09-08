@@ -1,5 +1,8 @@
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
@@ -36,7 +39,7 @@ public class Sudoku {
 				System.out.printf("%3d", temp);
 				vals[i][j] = temp;
 				if (temp == 0) {
-					vars.add(new Variable(i, j, boxCalc(i, j)));
+					vars.add(new Variable(i, j));
 				}
 				j++;
 				if (j == boardSize) {
@@ -70,7 +73,30 @@ public class Sudoku {
 			}
 			System.out.println();
 		}
+		BufferedWriter writer;
+		try {
+			writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/" + 
+					filename.substring(0,filename.length()-4) + "Solution.txt")
+					);
+			writerMA(writer, done(vars), vals);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
 
+	private static void writerMA(BufferedWriter writer, boolean done, int[][] vals) throws IOException{
+		if(done) {
+			for(int i = 0; i < vals.length; i++) {
+				for(int j = 0; j < vals.length; j++) {
+					writer.write(vals[i][j] + " ");
+				}
+				writer.write('\n');	
+			}
+			writer.close();
+		} else {
+			writer.write("-1");
+			writer.close();
+		}
 	}
 
 	public static void solve(ArrayList<Variable> vars, int[][] vals) {
@@ -128,39 +154,19 @@ public class Sudoku {
 		return true;
 	}
 	
-	public static int boxCalc(int row, int col) {
-		if(row < 3 && col < 3)
-			return 0;
-		else if(row < 3 && col <6)
-			return 1;
-		else if(row < 3 && col <9)
-			return 2;
-		else if(row < 6 && col <3)
-			return 3;
-		else if(row < 6 && col <6)
-			return 4;
-		else if(row < 6 && col <9)
-			return 5;
-		else if(row < 9 && col <3)
-			return 6;
-		else if(row < 9 && col <6)
-			return 7;
-		else 
-			return 8;
-	}
-	
 	public static void forwardChecking(Variable var, ArrayList<Variable> vars) {
 		for(Variable v: vars)
-			if(v.box == var.box || v.column == var.column || v.row == var.row)
+			if((v.row/partitionSize == var.row/partitionSize && v.column/partitionSize == var.column/partitionSize)
+					|| v.column == var.column || v.row == var.row)
 				if(v.domain.contains(var.value))
 					v.domain.remove(var.value);
 	}
 	
 	public static void forwardUnChecking(Variable var, ArrayList<Variable> vars) {
 		for(Variable v: vars)
-			if(v.box == var.box || v.column == var.column || v.row == var.row)
+			if((v.row/partitionSize == var.row/partitionSize && v.column/partitionSize == var.column/partitionSize)
+					|| v.column == var.column || v.row == var.row)
 					v.domain.add(var.value);
-		var.domain.remove(var.value);
 	}
 	
 	public static void initiateDomains(ArrayList<Variable> vars, int[][] vals) {
@@ -171,9 +177,8 @@ public class Sudoku {
 			}
 			for(int i = 0; i < boardSize; i++) 
 				for(int j = 0; j < boardSize; j++)
-					if(v.box == boxCalc(i, j) || v.column == j || v.row == i)
+					if((v.row/partitionSize == i/partitionSize && v.column/partitionSize == j/partitionSize) || v.column == j || v.row == i)
 						if(initialDomain.contains(vals[i][j])) {
-							//System.out.println(i +" " +  j + " "+ boxCalc(i, j) + " " + vals[i][j]);
 							initialDomain.remove(vals[i][j]);
 						}
 			v.domain = initialDomain;
