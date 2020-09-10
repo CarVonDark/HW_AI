@@ -83,6 +83,15 @@ public class Sudoku {
 			}
 		}
 		System.out.println(bol);
+		BufferedWriter writer;
+		try {
+			writer = new BufferedWriter(new FileWriter("./"
+			//writer = new BufferedWriter(new FileWriter("C:/Users/Administrator/Documents/CSSE413/"
+					+ filename.substring(0, filename.length() - 4) + "Solution.txt"));
+			writerMA(writer, done(vars), vals);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		// Output
 		if (!done(vars)) {
 			System.out.println("No solution found.");
@@ -95,15 +104,7 @@ public class Sudoku {
 			}
 			System.out.println();
 		}
-		BufferedWriter writer;
-		try {
-			writer = new BufferedWriter(new FileWriter("./"
-			//writer = new BufferedWriter(new FileWriter("C:/Users/Administrator/Documents/CSSE413/"
-					+ filename.substring(0, filename.length() - 4) + "Solution.txt"));
-			writerMA(writer, done(vars), vals);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
 	}
 
 	private static void writerMA(BufferedWriter writer, boolean done, int[][] vals) throws IOException {
