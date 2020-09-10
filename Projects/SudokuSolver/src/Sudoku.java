@@ -91,7 +91,8 @@ public class Sudoku {
 		}
 		BufferedWriter writer;
 		try {
-			writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/"
+			//writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/"
+			writer = new BufferedWriter(new FileWriter("C:/Users/Administrator/Documents/CSSE413/"
 					+ filename.substring(0, filename.length() - 4) + "Solution.txt"));
 			writerMA(writer, done(vars), vals);
 		} catch (IOException e) {
