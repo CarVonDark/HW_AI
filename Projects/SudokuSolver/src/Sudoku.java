@@ -69,7 +69,14 @@ public class Sudoku {
 		long duration = (endTime - startTime);  
 		
 		System.out.println("Duration: " + duration);
-
+		Boolean bol = false;
+		for(Variable v: vars) {
+			bol = checkSingle(v, vals);
+			if(!bol) {
+				System.out.println(v.row + " " + v.column + " " + v.value);
+			}
+		}
+		System.out.println(bol);
 		// Output
 		if (!done(vars)) {
 			System.out.println("No solution found.");
@@ -142,13 +149,19 @@ public class Sudoku {
 	public static boolean checkSingle(Variable current, int[][] vals) {
 		int rowBox = (int) (current.row / partitionSize) * partitionSize;
 		int columnBox = (int) (current.column / partitionSize) * partitionSize;
-		for (int i = 0; i < boardSize; i++)
-			if (vals[current.row][i] == current.value || vals[i][current.column] == current.value)
+		for (int i = 0; i < boardSize; i++) {
+			if ((i!=current.column && vals[current.row][i] == current.value) || (i != current.row && vals[i][current.column] == current.value)) {
 				return false;
+			}
+		}
 		for (int i = 0; i < partitionSize; i++)
-			for (int j = 0; j < partitionSize; j++)
-				if (vals[rowBox + i][columnBox + j] == current.value)
+			for (int j = 0; j < partitionSize; j++) {
+				if(rowBox + i == current.row && columnBox + j == current.column)
+					continue;
+				if (vals[rowBox + i][columnBox + j] == current.value) {
 					return false;
+				}
+			}
 		return true;
 	}
 
@@ -191,11 +204,18 @@ public class Sudoku {
 	}
 
 	public static void initiateDomains(ArrayList<Variable> vars, int[][] vals) {
+		HashSet<Integer> initialDomain = new HashSet<Integer>();
+		for(int i = 1; i <= boardSize; i++) {
+			initialDomain.add(i);
+		}
 		for (Variable v : vars) {
+			
 			HashSet<Integer> initialDomainRow = new HashSet<Integer>();
 			HashSet<Integer> initialDomainCol = new HashSet<Integer>();
 			HashSet<Integer> initialDomainBox = new HashSet<Integer>();
-
+			
+			
+			
 			for (int i = 0; i < boardSize; i++) {
 				for (int j = 0; j < boardSize; j++) {
 					if ((v.row / partitionSize == i / partitionSize && v.column / partitionSize == j / partitionSize))

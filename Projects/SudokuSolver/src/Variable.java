@@ -18,4 +18,8 @@ public class Variable {
 		this.domainCol = new HashSet<Integer>();
 		this.domainBox = new HashSet<Integer>();
 	}
+	
+	public void pickANumber() {
+		
+	}
 }
