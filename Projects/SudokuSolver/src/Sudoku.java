@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 
@@ -11,6 +12,7 @@ public class Sudoku {
 
 	private static int boardSize = 0;
 	private static int partitionSize = 0;
+	private static HashMap<Integer, Variable> indexMap = new HashMap<Integer, Variable>();
 
 	public static void main(String[] args) {
 		
@@ -34,13 +36,17 @@ public class Sudoku {
 			System.out.println("Input:");
 			int i = 0;
 			int j = 0;
+			int index = 0;
 			while (input.hasNext()) {
 				temp = input.nextInt();
 				count++;
 				System.out.printf("%3d", temp);
 				vals[i][j] = temp;
 				if (temp == 0) {
-					vars.add(new Variable(i, j));
+					Variable v = new Variable(i, j);
+					vars.add(v);
+					index++;
+					indexMap.put(i*partitionSize + j, v);
 				}
 				j++;
 				if (j == boardSize) {
@@ -69,9 +75,9 @@ public class Sudoku {
 		long duration = (endTime - startTime);  
 		
 		System.out.println("Duration: " + duration);
-		Boolean bol = false;
+		Boolean bol = true;
 		for(Variable v: vars) {
-			bol = checkSingle(v, vals);
+			bol &= checkSingle(v, vals);
 			if(!bol) {
 				System.out.println(v.row + " " + v.column + " " + v.value);
 			}
@@ -91,8 +97,8 @@ public class Sudoku {
 		}
 		BufferedWriter writer;
 		try {
-			//writer = new BufferedWriter(new FileWriter("E:/Rose/SchoolWork/Current/CSSE413_ArtificialIntelligence/"
-			writer = new BufferedWriter(new FileWriter("C:/Users/Administrator/Documents/CSSE413/"
+			writer = new BufferedWriter(new FileWriter("./"
+			//writer = new BufferedWriter(new FileWriter("C:/Users/Administrator/Documents/CSSE413/"
 					+ filename.substring(0, filename.length() - 4) + "Solution.txt"));
 			writerMA(writer, done(vars), vals);
 		} catch (IOException e) {
@@ -187,6 +193,7 @@ public class Sudoku {
 			}
 		}
 		return false;
+		
 	}
 
 	public static void forwardUnChecking(Variable var, ArrayList<Variable> vars) {
