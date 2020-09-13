@@ -4,4 +4,6 @@
   - #### Backtracking
   - #### Foward checking
 - ### Search/Planning route
-  
+  - #### Breadth-first Search
+  - #### Greedy Search
+  - #### A*
