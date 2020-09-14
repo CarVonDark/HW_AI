@@ -1,4 +1,6 @@
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Queue;
 
 /**
 	Represents an intelligent agent moving through a particular room.	
@@ -70,6 +72,18 @@ public class Robot {
 	 * the algorithm adds a node to the open data structure, i.e. its queue.
 	 */
 	public void bfs() {
+		Queue<Position> queue = new LinkedList<Position>();
+		HashSet<Position> hasVisited = new HashSet<Position>();
+		Position current = new Position(posRow, posCol);
+		LinkedList<Position> targets = env.getTargets();
+		queue.add(current);
+		hasVisited.add(current);
+		while(!queue.isEmpty()) {
+			current = queue.remove();
+			if(targets.contains(current)) {
+				
+			}
+		}
 	}
 	
 	/** 
@@ -77,9 +91,10 @@ public class Robot {
 	 * of the field this.path and sets this.pathFound to true, if a path has been 
 	 * found. IMPORTANT: This method increases the this.openCount field every time
 	 * the algorithm adds a node to the open data structure, i.e. its field that holds
-	 * the node to be exlored next.
+	 * the node to be explored next.
 	 */
 	public void greedy() {
+		
 	}
 
 	/** 
@@ -91,5 +106,5 @@ public class Robot {
 	public void astar() {
 	}
 	
-
+	
 }
