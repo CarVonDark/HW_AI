@@ -46,7 +46,7 @@ public class Environment {
 	 * Returns a the status of a tile at a given [row][col] coordinate
 	 */
 	public TileStatus getTileStatus(int row, int col) {
-		if (row < 0 || row >= rows || col < 0 || col > cols) return TileStatus.IMPASSABLE; 
+		if (row < 0 || row >= rows || col < 0 || col >= cols) return TileStatus.IMPASSABLE; 
 		else return tiles[row][col].getStatus();
 	}
 

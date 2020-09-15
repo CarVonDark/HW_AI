@@ -100,10 +100,10 @@ class EnvironmentPanel extends JPanel{
 					timer.stop();
 					printPerformanceMeasure();
 				}
-				if (goalConditionMet()) {
-					timer.stop();
-					printPerformanceMeasure();
-				}
+//				if (goalConditionMet()) {
+//					timer.stop();
+//					printPerformanceMeasure();
+//				}
 			}
 			
 			public void printPerformanceMeasure() {
