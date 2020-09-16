@@ -38,8 +38,9 @@ public class Environment {
 	public int getRows() { return this.rows; }
 	public int getCols() { return this.cols; }
 
+	@SuppressWarnings("unchecked")
 	public LinkedList<Position> getTargets(){
-		return this.targets;
+		return (LinkedList<Position>) this.targets.clone();
 	}
 
 	/*
