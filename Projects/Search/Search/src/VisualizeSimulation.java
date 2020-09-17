@@ -51,7 +51,9 @@ public class VisualizeSimulation extends JFrame {
 		Environment env = new Environment(map, robotPos); // Modify for multiple robots MIW
 		Robot robot = new Robot(env, robotPos.row, robotPos.col);
 		// TODO: Change the following to the search algorithm you are testing.
-		robot.bfs();
+		//robot.bfs();
+		//robot.astar();
+		robot.astar101112();
 		
 		ArrayList<Robot> robots = new ArrayList<Robot>();
 		robots.add(robot);
@@ -77,10 +79,10 @@ class EnvironmentPanel extends JPanel{
 	private LinkedList<Position> targets;
 	private int timesteps, timestepsStop;
 	//TODO: Change TILESIZE if you want to enlarge the visualization.
-	public static final int TILESIZE = 30;
+	public static final int TILESIZE = 20;
 	//TODO: Change the timeStepSpeed to speed-up or slow down the animation.
 	// 500 millisecond time steps
-	private int timeStepSpeed = 300;
+	private int timeStepSpeed = 100;
 	
 	public EnvironmentPanel(Environment env, ArrayList<Robot> robots) {
 	    setPreferredSize(new Dimension(env.getCols()*TILESIZE, env.getRows()*TILESIZE));

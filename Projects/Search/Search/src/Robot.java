@@ -1,8 +1,6 @@
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.PriorityQueue;
 
 /**
  * Represents an intelligent agent moving through a particular room. The robot
@@ -116,7 +114,7 @@ public class Robot {
 			Position currentTarget = null;
 			while (!queue.isEmpty()) {
 				Position current = queue.poll();
-				//System.out.println(current.row + " " + current.col);
+				// System.out.println(current.row + " " + current.col);
 				if (env.validPos(current.row, current.col + 1)) {
 					Position next = new Position(current.row, current.col + 1);
 					if (!hasVisited[next.row][next.col]) {
@@ -180,16 +178,16 @@ public class Robot {
 				targets.remove(currentTarget);
 				int row = currentTarget.row;
 				int col = currentTarget.col;
-				while(!moves[row][col].equals(Action.DO_NOTHING)) {
+				while (!moves[row][col].equals(Action.DO_NOTHING)) {
 					thisTurn.addFirst(moves[row][col]);
 					this.pathLength++;
-					if(moves[row][col].equals(Action.MOVE_RIGHT))
+					if (moves[row][col].equals(Action.MOVE_RIGHT))
 						col--;
-					else if(moves[row][col].equals(Action.MOVE_LEFT))
+					else if (moves[row][col].equals(Action.MOVE_LEFT))
 						col++;
-					else if(moves[row][col].equals(Action.MOVE_UP))
+					else if (moves[row][col].equals(Action.MOVE_UP))
 						row++;
-					else 
+					else
 						row--;
 				}
 				for (int i = 0; i < hasVisited.length; i++) {
@@ -216,8 +214,15 @@ public class Robot {
 	 * algorithm adds a node to the open data structure, i.e. its field that holds
 	 * the node to be explored next.
 	 */
+	/*
+	 * It looks like in this assignment we do not need to do greedy
+	 */
 	public void greedy() {
-		
+
+	}
+
+	public int getDistance(Position current, Position target) {
+		return Math.abs(current.row - target.row) + Math.abs(current.col - target.col);
 	}
 
 	/**
@@ -226,7 +231,223 @@ public class Robot {
 	 * IMPORTANT: This method increases the this.openCount field every time the
 	 * algorithm adds a node to the open data structure, i.e. its priorityQueue
 	 */
+	/*
+	 * For astar 0-5 I assume there is only one target
+	 */
 	public void astar() {
+		LinkedList<Position> targets = env.getTargets();
+		Position target = targets.poll();
+		PriorityQueue<PositionContainer> queue = new PriorityQueue<PositionContainer>(
+				new Comparator<PositionContainer>() {
+					@Override
+					public int compare(PositionContainer p0, PositionContainer p1) {
+						return (p0.distance - p1.distance) + getDistance(p0.p, target) - getDistance(p1.p, target);
+					}
+				});
+		boolean[][] hasVisited = new boolean[env.getRows()][env.getCols()];
+		Action[][] moves = new Action[env.getRows()][env.getCols()];
+		for (int i = 0; i < hasVisited.length; i++) {
+			for (int j = 0; j < hasVisited[0].length; j++) {
+				hasVisited[i][j] = false;
+				moves[i][j] = Action.DO_NOTHING;
+			}
+		}
+		PositionContainer root = new PositionContainer(new Position(posRow, posCol), 0);
+		queue.add(root);
+		hasVisited[root.p.row][root.p.col] = true;
+		while (!queue.isEmpty()) {
+			PositionContainer currentContainer = queue.poll();
+			Position current = currentContainer.p;
+			int distance = currentContainer.distance;
+			// System.out.println(current.row + " " + current.col);
+			if (current.equals(target)) {
+				this.pathFound = true;
+				break;
+			}
+			if (env.validPos(current.row, current.col + 1)) {
+				Position next = new Position(current.row, current.col + 1);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
+					this.openCount++;
+					queue.add(new PositionContainer(next, distance + 1));
+				}
+			}
+			if (env.validPos(current.row, current.col - 1)) {
+				Position next = new Position(current.row, current.col - 1);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row][current.col - 1] = Action.MOVE_LEFT;
+					this.openCount++;
+					queue.add(new PositionContainer(next, distance + 1));
+				}
+			}
+			if (env.validPos(current.row + 1, current.col)) {
+				Position next = new Position(current.row + 1, current.col);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row + 1][current.col] = Action.MOVE_DOWN;
+					this.openCount++;
+					queue.add(new PositionContainer(next, distance + 1));
+				}
+			}
+			if (env.validPos(current.row - 1, current.col)) {
+				Position next = new Position(current.row - 1, current.col);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row - 1][current.col] = Action.MOVE_UP;
+					this.openCount++;
+					queue.add(new PositionContainer(next, distance + 1));
+				}
+			}
+
+		}
+		if (this.pathFound) {
+			int row = target.row;
+			int col = target.col;
+			while (!moves[row][col].equals(Action.DO_NOTHING)) {
+				this.path.addFirst(moves[row][col]);
+				this.pathLength++;
+				if (moves[row][col].equals(Action.MOVE_RIGHT))
+					col--;
+				else if (moves[row][col].equals(Action.MOVE_LEFT))
+					col++;
+				else if (moves[row][col].equals(Action.MOVE_UP))
+					row++;
+				else
+					row--;
+			}
+		}
 	}
 
+	public void astar101112() {
+		LinkedList<Position> targets = env.getTargets();
+		PriorityQueue<PositionContainer> queue = new PriorityQueue<PositionContainer>(
+				new Comparator<PositionContainer>() {
+					@Override
+					public int compare(PositionContainer p0, PositionContainer p1) {
+						int min = Integer.MAX_VALUE;
+						int re = -1;
+						for (Position target : targets) {
+							int p0Distance = p0.distance + getDistance(p0.p, target);
+							int p1Distance = p1.distance + getDistance(p1.p, target);
+							if (p0Distance < min) {
+								min = p0Distance;
+								re = -1;
+							}
+							if (p1Distance < min) {
+								min = p1Distance;
+								re = 1;
+							}
+						}
+						return re;
+					}
+				});
+		boolean[][] hasVisited = new boolean[env.getRows()][env.getCols()];
+		Action[][] moves = new Action[env.getRows()][env.getCols()];
+		for (int i = 0; i < hasVisited.length; i++) {
+			for (int j = 0; j < hasVisited[0].length; j++) {
+				hasVisited[i][j] = false;
+				moves[i][j] = Action.DO_NOTHING;
+			}
+		}
+		PositionContainer root = new PositionContainer(new Position(posRow, posCol), 0);
+		queue.add(root);
+		hasVisited[root.p.row][root.p.col] = true;
+		while (!targets.isEmpty()) {
+			Position currentTarget = null;
+			while (!queue.isEmpty()) {
+				PositionContainer currentContainer = queue.poll();
+				Position current = currentContainer.p;
+				int distance = currentContainer.distance;
+				System.out.println(current.row + " " + current.col);
+				if (targets.contains(current)) {
+					targets.remove(current);
+					currentTarget = current;
+					this.pathFound = true;
+					break;
+				}
+				if (env.validPos(current.row, current.col + 1)) {
+					Position next = new Position(current.row, current.col + 1);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
+						this.openCount++;
+						queue.add(new PositionContainer(next, distance + 1));
+					}
+				}
+				if (env.validPos(current.row, current.col - 1)) {
+					Position next = new Position(current.row, current.col - 1);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row][current.col - 1] = Action.MOVE_LEFT;
+						this.openCount++;
+						queue.add(new PositionContainer(next, distance + 1));
+					}
+				}
+				if (env.validPos(current.row + 1, current.col)) {
+					Position next = new Position(current.row + 1, current.col);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row + 1][current.col] = Action.MOVE_DOWN;
+						this.openCount++;
+						queue.add(new PositionContainer(next, distance + 1));
+					}
+				}
+				if (env.validPos(current.row - 1, current.col)) {
+					Position next = new Position(current.row - 1, current.col);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row - 1][current.col] = Action.MOVE_UP;
+						this.openCount++;
+						queue.add(new PositionContainer(next, distance + 1));
+					}
+				}
+
+			}
+
+			if (this.pathFound && currentTarget != null) {
+				this.pathFound = true;
+				LinkedList<Action> thisTurn = new LinkedList<Action>();
+				int row = currentTarget.row;
+				int col = currentTarget.col;
+				while (!moves[row][col].equals(Action.DO_NOTHING)) {
+					thisTurn.addFirst(moves[row][col]);
+					this.pathLength++;
+					if (moves[row][col].equals(Action.MOVE_RIGHT))
+						col--;
+					else if (moves[row][col].equals(Action.MOVE_LEFT))
+						col++;
+					else if (moves[row][col].equals(Action.MOVE_UP))
+						row++;
+					else
+						row--;
+				}
+				for (int i = 0; i < hasVisited.length; i++) {
+					for (int j = 0; j < hasVisited[0].length; j++) {
+						hasVisited[i][j] = false;
+						moves[i][j] = Action.DO_NOTHING;
+					}
+				}
+				this.path.addAll(thisTurn);
+				queue.clear();
+				queue.add(new PositionContainer(currentTarget, 0));
+				hasVisited[currentTarget.row][currentTarget.col] = true;
+			} else {
+				this.pathFound = false;
+				break;
+			}
+		}
+	}
+
+}
+
+class PositionContainer {
+	public int distance;
+	public Position p;
+
+	public PositionContainer(Position p, int distance) {
+		this.p = p;
+		this.distance = distance;
+	}
 }
