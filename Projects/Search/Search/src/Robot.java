@@ -455,7 +455,8 @@ public class Robot {
 			}
 		}
 	}
-
+	
+	//It is the same as 101112
 	public void astar141516() {
 		LinkedList<Position> targets = env.getTargets();
 		HashSet<Position> set = new HashSet<Position>();
