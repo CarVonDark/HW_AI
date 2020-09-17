@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -83,7 +84,7 @@ public class Robot {
 	 * functions.
 	 */
 	public Action getAction() {
-		if(index < pathLength) {
+		if (index < pathLength) {
 			return path.get(index++);
 		} else {
 			return Action.DO_NOTHING;
@@ -97,74 +98,115 @@ public class Robot {
 	 * the algorithm adds a node to the open data structure, i.e. its queue.
 	 */
 	public void bfs() {
-		Queue<Position> queue = new LinkedList<Position>();
-		LinkedList<Position> hasVisited = new LinkedList<Position>();
-		Position current = new Position(posRow, posCol);
+		LinkedList<Position> queue = new LinkedList<Position>();
+		boolean[][] hasVisited = new boolean[env.getRows()][env.getCols()];
+		Action[][] moves = new Action[env.getRows()][env.getCols()];
+		for (int i = 0; i < hasVisited.length; i++) {
+			for (int j = 0; j < hasVisited[0].length; j++) {
+				hasVisited[i][j] = false;
+				moves[i][j] = Action.DO_NOTHING;
+			}
+		}
+		Position root = new Position(posRow, posCol);
+		queue.add(root);
+		hasVisited[root.row][root.col] = true;
 		LinkedList<Position> targets = env.getTargets();
-		queue.add(current);
-		if (bfsHelper(queue, hasVisited, targets)) {
-			this.pathFound = true;
-		} else {
-			this.pathFound = false;
-		}
-	}
-
-	public boolean bfsHelper(Queue<Position> queue, LinkedList<Position> hasVisited, LinkedList<Position> targets) {
-		if (queue.isEmpty()) {
-			return false;
-		}
-		Position current = queue.remove();
-		if (targets.contains(current)) {
-			targets.remove(current);
-		}
-		if (targets.isEmpty()) {
-			return true;
-		}
-		if (env.validPos(current.row, current.col + 1)) {
-			hasVisited.add(current);
-			Position next = new Position(current.row, current.col + 1);
-			if (!hasVisited.contains(next)) {
-				this.openCount++;
-				this.pathLength++;
-				this.path.add(Action.MOVE_RIGHT);
-				queue.add(next);
+		while (!targets.isEmpty()) {
+			Boolean currentTargetFound = false;
+			Position currentTarget = null;
+			while (!queue.isEmpty()) {
+				Position current = queue.poll();
+				//System.out.println(current.row + " " + current.col);
+				if (env.validPos(current.row, current.col + 1)) {
+					Position next = new Position(current.row, current.col + 1);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
+						if (targets.contains(next)) {
+							currentTarget = new Position(next.row, next.col);
+							currentTargetFound = true;
+							break;
+						}
+						this.openCount++;
+						queue.add(next);
+					}
+				}
+				if (env.validPos(current.row, current.col - 1)) {
+					Position next = new Position(current.row, current.col - 1);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row][current.col - 1] = Action.MOVE_LEFT;
+						if (targets.contains(next)) {
+							currentTarget = new Position(next.row, next.col);
+							currentTargetFound = true;
+							break;
+						}
+						this.openCount++;
+						queue.add(next);
+					}
+				}
+				if (env.validPos(current.row + 1, current.col)) {
+					Position next = new Position(current.row + 1, current.col);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row + 1][current.col] = Action.MOVE_DOWN;
+						if (targets.contains(next)) {
+							currentTarget = new Position(next.row, next.col);
+							currentTargetFound = true;
+							break;
+						}
+						this.openCount++;
+						queue.add(next);
+					}
+				}
+				if (env.validPos(current.row - 1, current.col)) {
+					Position next = new Position(current.row - 1, current.col);
+					if (!hasVisited[next.row][next.col]) {
+						hasVisited[next.row][next.col] = true;
+						moves[current.row - 1][current.col] = Action.MOVE_UP;
+						if (targets.contains(next)) {
+							currentTarget = new Position(next.row, next.col);
+							currentTargetFound = true;
+							break;
+						}
+						this.openCount++;
+						queue.add(next);
+					}
+				}
 			}
-			return bfsHelper(queue, hasVisited, targets);
-		}
-		if (env.validPos(current.row + 1, current.col)) {
-			hasVisited.add(current);
-			Position next = new Position(current.row + 1, current.col);
-			if (!hasVisited.contains(next)) {
-				this.openCount++;
-				this.pathLength++;
-				this.path.add(Action.MOVE_DOWN);
-				queue.add(next);
+			if (currentTargetFound) {
+				this.pathFound = true;
+				LinkedList<Action> thisTurn = new LinkedList<Action>();
+				targets.remove(currentTarget);
+				int row = currentTarget.row;
+				int col = currentTarget.col;
+				while(!moves[row][col].equals(Action.DO_NOTHING)) {
+					thisTurn.addFirst(moves[row][col]);
+					this.pathLength++;
+					if(moves[row][col].equals(Action.MOVE_RIGHT))
+						col--;
+					else if(moves[row][col].equals(Action.MOVE_LEFT))
+						col++;
+					else if(moves[row][col].equals(Action.MOVE_UP))
+						row++;
+					else 
+						row--;
+				}
+				for (int i = 0; i < hasVisited.length; i++) {
+					for (int j = 0; j < hasVisited[0].length; j++) {
+						hasVisited[i][j] = false;
+						moves[i][j] = Action.DO_NOTHING;
+					}
+				}
+				this.path.addAll(thisTurn);
+				queue.clear();
+				queue.add(currentTarget);
+				hasVisited[currentTarget.row][currentTarget.col] = true;
+			} else {
+				this.pathFound = false;
+				break;
 			}
-			return bfsHelper(queue, hasVisited, targets);
 		}
-		if (env.validPos(current.row, current.col - 1)) {
-			hasVisited.add(current);
-			Position next = new Position(current.row, current.col - 1);
-			if (!hasVisited.contains(next)) {
-				this.openCount++;
-				this.pathLength++;
-				this.path.add(Action.MOVE_LEFT);
-				queue.add(next);
-			}
-			return bfsHelper(queue, hasVisited, targets);
-		}
-		if (env.validPos(current.row - 1, current.col)) {
-			hasVisited.add(current);
-			Position next = new Position(current.row - 1, current.col);
-			if (!hasVisited.contains(next)) {
-				this.openCount++;
-				this.pathLength++;
-				this.path.add(Action.MOVE_UP);
-				queue.add(next);
-			}
-			return bfsHelper(queue, hasVisited, targets);
-		}
-		return false;
 	}
 
 	/**
@@ -175,7 +217,7 @@ public class Robot {
 	 * the node to be explored next.
 	 */
 	public void greedy() {
-
+		
 	}
 
 	/**

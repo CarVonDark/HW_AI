@@ -32,7 +32,7 @@ public class VisualizeSimulation extends JFrame {
 	 */
 	public VisualizeSimulation() {
 		// TODO: change the following to run the simulation on different maps.
-		String filename = "Map1.txt";
+		String filename = "Map16.txt";
 		LinkedList<String> map = new LinkedList<>();
 	    try {
 			File inputFile = new File(filename);
@@ -52,7 +52,7 @@ public class VisualizeSimulation extends JFrame {
 		Robot robot = new Robot(env, robotPos.row, robotPos.col);
 		// TODO: Change the following to the search algorithm you are testing.
 		robot.bfs();
-	
+		
 		ArrayList<Robot> robots = new ArrayList<Robot>();
 		robots.add(robot);
     	envPanel = new EnvironmentPanel(env, robots);
@@ -77,10 +77,10 @@ class EnvironmentPanel extends JPanel{
 	private LinkedList<Position> targets;
 	private int timesteps, timestepsStop;
 	//TODO: Change TILESIZE if you want to enlarge the visualization.
-	public static final int TILESIZE = 50;
+	public static final int TILESIZE = 30;
 	//TODO: Change the timeStepSpeed to speed-up or slow down the animation.
 	// 500 millisecond time steps
-	private int timeStepSpeed = 500;
+	private int timeStepSpeed = 300;
 	
 	public EnvironmentPanel(Environment env, ArrayList<Robot> robots) {
 	    setPreferredSize(new Dimension(env.getCols()*TILESIZE, env.getRows()*TILESIZE));
@@ -100,10 +100,10 @@ class EnvironmentPanel extends JPanel{
 					timer.stop();
 					printPerformanceMeasure();
 				}
-//				if (goalConditionMet()) {
-//					timer.stop();
-//					printPerformanceMeasure();
-//				}
+				if (goalConditionMet()) {
+					timer.stop();
+					printPerformanceMeasure();
+				}
 			}
 			
 			public void printPerformanceMeasure() {
