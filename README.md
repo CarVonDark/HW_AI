@@ -7,3 +7,4 @@
   - #### Breadth-first Search
   - #### Greedy Search (Not implemented in the code but very simple)
   - #### A*
+- ### Neural Network
