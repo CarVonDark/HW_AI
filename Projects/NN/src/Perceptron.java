@@ -3,9 +3,9 @@ public class Perceptron {
 	
 	private static int[][] trainingData = {		
 		{0,0,0},
-		{0,1,0},
-		{1,0,0},
-		{1,1,1}}; 
+		{0,1,1},
+		{1,0,1},
+		{1,1,0}}; 
 	
 	private static int trainingSetSize = 0;
 	private static int networkSize = 0;
@@ -51,6 +51,31 @@ public class Perceptron {
 		// calculate input to output unit: weighted sums of the inputs, followed by calling activation function
 		// calculate error: desired output - actual output (i.e. activation)
 		// adjust weights
+		double error = Double.MAX_VALUE;
+		int errorTimes = trainingSetSize;
+		int count = 0;
+		while(errorTimes != 0) {
+			errorTimes = 0;
+			for(int i = 0; i < trainingSetSize; i++) {
+				double sum = 0;
+				for(int j = 0; j < networkSize; j++) {
+					sum += weights[j] * trainingData[i][j];
+				}
+				error = trainingData[i][2] - stepActivationFunction(sum);
+				if(error > 0) {
+					errorTimes++;
+				}
+				for(int j = 0; j < networkSize; j++) {
+					weights[j] += learningRate * error * trainingData[i][j];
+				}
+				System.out.println(weights[0] + " " + weights[1]);
+			}			
+			if(errorTimes == 0 || count > 100) {
+				break;
+			}
+			count++;
+		}
+		System.out.println("Episodes are " + count);
 	}
 	
 	private static void printWeights(){
