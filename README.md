@@ -8,3 +8,6 @@
   - #### Greedy Search (Not implemented)
   - #### A*
 - ### Neural Network
+  - #### Perceptron
+  - #### Hidden Layer for XOR
+  - #### Feedfoward Network
