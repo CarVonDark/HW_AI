@@ -45,13 +45,13 @@ public class XOR {
 	public static void main(String[] args){
 		initNetwork();
 		trainNetwork();
-//		printWeights();
+		//printWeights();
 		testNetwork();
 	}
 	
 	private static void trainNetwork(){
 		// k episodes
-		for (int k = 0; k < 1000; k++){
+		for (int k = 0; k < 1000000; k++){
 			//Run through entire training set once.
 			for (int example = 0; example < trainingSetSize; example++){
 				double[] activationInput = new double[inputLayerSize]; // We store the activation of each node (over all input and hidden layers) as we need that data during back propagation.
