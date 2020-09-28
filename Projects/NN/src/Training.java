@@ -9,7 +9,7 @@ public class Training {
 				{1,1}
 		}; 
 		double[][] desiredOutput = {{0},{1},{1},{0}};		
-		//n.initNetwork(inputs, desiredOutput, 0.3, 0);
+		n.initNetwork(inputs, desiredOutput, 0.3, 0, 10);
 		//n.trainNetwork(10000, false);
 		n.printWeights();
 		n.testNetwork();

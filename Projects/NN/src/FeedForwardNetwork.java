@@ -69,15 +69,10 @@ public class FeedForwardNetwork {
 		for (int l = 0; l < this.numHiddenLayers+1; l++) {
 			for (int i = 0; i < this.hiddenLayerSize; i++){
 				for (int j = 0; j < this.hiddenLayerSize; j++){
-					this.weights[l][i][j] = 0;
+					this.weights[l][i][j] = minWeight + Math.random()*weightRange;
 				}
 			}
 		}
-		
-		//TODO: set the weights manually
-		
-		
-
 	}
 
 	private static double stepActivationFunction(double input){
