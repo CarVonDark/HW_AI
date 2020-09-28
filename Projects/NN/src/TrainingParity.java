@@ -1,8 +1,8 @@
 public class TrainingParity {
 
-	// Odd parity bit
+	// Even parity bit
 	public static void main(String[] args){
-		FeedForwardNetwork n = new FeedForwardNetwork(7,1,1,1);
+		ParityNet n = new ParityNet(7,7,1,1);
 		double[][] inputs = generateInputs(7);
 		double[][] desiredOutput = generateOutputs(inputs);	
 		
@@ -15,9 +15,10 @@ public class TrainingParity {
 		}
 	
 		
-		n.initNetwork(inputs, desiredOutput, 0, 0);
-//		n.printWeights();
+		n.initNetwork(inputs, desiredOutput);
+		//n.printWeights();
 		n.testNetwork();
+		
 	}
 
 
