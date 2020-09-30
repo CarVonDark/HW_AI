@@ -11,6 +11,7 @@ public class FeedForwardNetwork {
 	private int numHiddenLayers = 0;
 	private int outputLayerSize = 0;
 	private int maxLayerSize = 0;
+	public double globalError = 0;
 	
 	public FeedForwardNetwork(int inputLayerSize, int hiddenLayerSize, int numHiddenLayers, int outputLayerSize){
 		if (inputLayerSize <= 0) {
@@ -97,11 +98,11 @@ public class FeedForwardNetwork {
 	
 	public void trainNetwork(int iterations, boolean verbose){
 		for (int k = 0; k < iterations; k++){
-			double globalError = 0.0;
+			globalError = 0.0;
 			//Run through entire training set once.
 			for (int example = 0; example < this.trainingSetSize; example++){
 			    // Used for progress bar. Uncomment if progress bar is desired. 
-				 long startTime = System.currentTimeMillis();
+				// long startTime = System.currentTimeMillis();
 				
 				// We store the activation of each node (over all input and hidden layers) because we need that data during back propagation.
 				// Please notice that in order to simplify the code, we store the activation of the input layer too.
@@ -148,12 +149,12 @@ public class FeedForwardNetwork {
 				// Adjusting weights at input layer.
 				adjustWeights(activation, error, this.inputLayerSize, this.hiddenLayerSize, 0);
 				// Uncomment the following line for a progress bar while training. Does not work in ecplise but does on the command line.
-				if (verbose) {
-					 printProgress(startTime, this.trainingSetSize, (example+1));
-				}
+//				if (verbose) {
+//					 printProgress(startTime, this.trainingSetSize, (example+1));
+//				}
 			}
 			if (verbose) {
-				System.out.println("Completed iteration " + (k+1) +" out of "+ iterations + " " + round((((double)(k+1)/iterations)), 4) + "% Complete");
+				System.out.println("Completed iteration " + (k+1) +" out of "+ iterations + " " + round((((double)(k+1)/iterations)), 4) * 100 + "% Complete");
 				// calculating RMS
 				System.out.println("Global error: " + Math.sqrt(globalError/(this.trainingSetSize*this.outputLayerSize)));
 			}
@@ -250,12 +251,12 @@ public class FeedForwardNetwork {
 	 */
 	public void testNetworkBatch(int testingSetSize, double[][] test_inputs, double[][] test_labels, boolean verbose) {
 		// Used for progress bar. Uncomment if progress bar is desired. 
-		 long startTime;
+		// long startTime;
 		int error_count = 0;
 		//Run through entire training set once.
 		for (int example = 0; example < testingSetSize; example++){
 		    // Used for progress bar. Uncomment is progress bar is desired. 
-			startTime = System.currentTimeMillis();
+			// startTime = System.currentTimeMillis();
 			
 			// We store the activation of each node (over all input and hidden layers) because we need that data during back propagation.
 			// Please notice that in order to simplify the code, we store the activation of the input layer too.
@@ -300,6 +301,7 @@ public class FeedForwardNetwork {
 		System.out.println("Done testing.");
 		System.out.println("Number correct: " + (testingSetSize - error_count) + " out of: " + testingSetSize);
 		System.out.println("Overall accuracy: " +   round((((double)(testingSetSize-error_count)/testingSetSize)), 4));
+		System.out.println("Global error: " + Math.sqrt(globalError/(this.trainingSetSize*this.outputLayerSize)));
 	}
 	
 	public static double round(double value, int places) {

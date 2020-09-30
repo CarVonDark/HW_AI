@@ -8,6 +8,9 @@ public class Training {
 	
 	private static double[][] trainingDataSet;
 	private static double[][] desiredOutput;
+	private static double[][] testingDataSet;
+	private static double[][] desiredTestOutput;
+	private static int testDataSize = 0;
 	private static int magicNumber = 0;
 	private static int numberOfItems = 0;
 	private static int nRows = 0;
@@ -22,11 +25,11 @@ public class Training {
 			e.printStackTrace();
 		}
 
-		FeedForwardNetwork n = new FeedForwardNetwork(nRows*nCols, nRows, 1, 1);
-		n.initNetwork(trainingDataSet, desiredOutput, 0.2, 1);
-		n.trainNetwork(1000, true);
+		FeedForwardNetwork n = new FeedForwardNetwork(nRows*nCols, 100, 1, 10);
+		n.initNetwork(trainingDataSet, desiredOutput, 0.001, 1);
+		n.trainNetwork(200, true);
 		n.printWeights();
-		n.testNetwork();
+		n.testNetworkBatch(10000, testingDataSet,desiredTestOutput,true);
 	}
 	
 	public static void readData() throws IOException{
@@ -50,13 +53,50 @@ public class Training {
         
         int pixelNum = nRows * nCols;
         trainingDataSet = new double[numberOfItems][pixelNum];
-        desiredOutput = new double[numberOfLabels][1];
+        desiredOutput = new double[numberOfLabels][10];
         
         for(int i = 0; i < numberOfLabels; i++) {
-        	desiredOutput[i][0] = labelInputStream.readUnsignedByte();
+        	int read = labelInputStream.readUnsignedByte();
+        	desiredOutput[i][read] = 1;
             for (int r = 0; r < nRows; r++) {
                 for (int c = 0; c < nCols; c++) {
-                    trainingDataSet[i][r*nCols+c] = dataInputStream.readUnsignedByte();
+                    double num = dataInputStream.readUnsignedByte();
+                    trainingDataSet[i][r*nCols+c] = num/255; //standardize data
+                }
+            }
+            
+        }
+        
+        //test data
+        DataInputStream testDataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream("test_images.idx3-ubyte")));
+        magicNumber = testDataInputStream.readInt();
+        int numberOfTestItems = testDataInputStream.readInt();
+        nRows = testDataInputStream.readInt();
+        nCols = testDataInputStream.readInt();
+
+        System.out.println("magic number is " + magicNumber);
+        System.out.println("number of items is " + numberOfTestItems);
+        System.out.println("number of rows is: " + nRows);
+        System.out.println("number of cols is: " + nCols);
+
+        DataInputStream testlabelInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream("test_labels.idx1-ubyte")));
+        labelMagicNumber = testlabelInputStream.readInt();
+        int numberOfTestLabels = testlabelInputStream.readInt();
+
+        System.out.println("labels magic number is: " + labelMagicNumber);
+        System.out.println("number of labels is: " + numberOfTestLabels);
+        
+        pixelNum = nRows * nCols;
+        testingDataSet = new double[numberOfTestItems][pixelNum];
+        desiredTestOutput = new double[numberOfLabels][10];
+        
+        for(int i = 0; i < numberOfTestLabels; i++) {
+        	int read = testlabelInputStream.readUnsignedByte();
+        	desiredTestOutput[i][read] = 1;
+            for (int r = 0; r < nRows; r++) {
+                for (int c = 0; c < nCols; c++) {
+                    double num = testDataInputStream.readUnsignedByte();
+                    testingDataSet[i][r*nCols+c] = num/255;
                 }
             }
             
