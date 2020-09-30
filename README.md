@@ -11,4 +11,4 @@
   - #### Perceptron
   - #### Hidden Layer for XOR
   - #### N-Parity by Feedfoward Network
-  - #### MNISR digit recognition by Feedfoward Network
+  - #### MNIST digit recognition by Feedfoward Network
