@@ -10,4 +10,5 @@
 - ### Neural Network
   - #### Perceptron
   - #### Hidden Layer for XOR
-  - #### Feedfoward Network
+  - #### N-Parity by Feedfoward Network
+  - #### MNISR digit recognition by Feedfoward Network
