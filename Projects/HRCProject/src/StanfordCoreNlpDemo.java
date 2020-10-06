@@ -1,6 +1,7 @@
 
 import java.io.*;
 import java.util.*;
+import java.util.Properties;
 
 import edu.stanford.nlp.coref.CorefCoreAnnotations;
 
