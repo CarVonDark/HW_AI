@@ -223,13 +223,13 @@ public class Robot {
 		List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
 		Action re = Action.DO_NOTHING;
 		String first = root.originalText().toLowerCase();
-		if (first.equals("move")) {
+		if (first.equals("move") || first.equals("go")) {
 			boolean hasConfirmed = false;
 			for (Pair<GrammaticalRelation, IndexedWord> pair : s) {
 				if (pair.first().toString().equals("advmod")) {
 					Pair<GrammaticalRelation, IndexedWord> adverb = pair;
 					if (adverb.second.tag().equals("RB")) {
-						String str = adverb.second.originalText();
+						String str = adverb.second.originalText().toLowerCase();
 						switch (str) {
 						case "right":
 							if (hasConfirmed && re != Action.MOVE_RIGHT) {
@@ -267,6 +267,8 @@ public class Robot {
 							re = Action.MOVE_DOWN;
 							hasConfirmed = true;
 							break;
+						case "not":
+							return Action.DO_NOTHING;
 						default:
 							break;
 						}
@@ -276,6 +278,32 @@ public class Robot {
 		} else if (first.equals("clean")) {
 			if (s.size() == 1) {
 				return Action.CLEAN;
+			}
+		} else if(first.equals("do")) {
+			boolean again = false;
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if(!p.first.toString().equals("discourse") && !p.first.toString().equals("punct")
+							&& !p.first.toString().equals("npmod") && !p.first.toString().equals("dep")
+							&& !p.first.toString().equals("advmod") && !p.first.toString().equals("obj")
+							&& !p.first.toString().equals("xcomp")) {
+					lastAction = doNotUnderstand();
+					return lastAction;
+				}
+				if(p.first.toString().equals("advmod") || p.first.toString().equals("xcomp")) {
+					if(p.second.originalText().equals("again")) {
+						again = true;
+					}
+					if(p.second.originalText().equals("not")) {
+						return Action.DO_NOTHING;
+					}
+				}
+				
+			}
+			if(again) {
+				if (lastAction == Action.DO_NOTHING) {
+					System.out.println("Sorry! Your last command was not clear!");
+				}
+				re = lastAction;
 			}
 		}
 		return re;
@@ -310,9 +338,19 @@ public class Robot {
 			break;
 		case "up":
 			re = Action.MOVE_UP;
+			for(Pair<GrammaticalRelation, IndexedWord> p: s) {
+				if(p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
+					return Action.DO_NOTHING;
+				}
+			}
 			break;
 		case "down":
 			re = Action.MOVE_DOWN;
+			for(Pair<GrammaticalRelation, IndexedWord> p: s) {
+				if(p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
+					return Action.DO_NOTHING;
+				}
+			}
 			break;
 		case "again":
 			if (lastAction == Action.DO_NOTHING) {
@@ -376,7 +414,7 @@ public class Robot {
 
 	private void randomPrintIThink(String string) {
 		double seed = Math.random() * 5;
-		System.out.print("I think you want to");
+		System.out.print("I think you want to ");
 		if (seed <= 1) {
 			if(string.equals("clean")) {
 				System.out.println("clean!");
