@@ -378,7 +378,7 @@ public class Robot {
 	private Action doNotUnderstand() {
 		Action re = keyWordSearch();
 		if (re == Action.DO_NOTHING) {
-			double seed = Math.random() * 5;
+			double seed = Math.random() * 10;
 			if (seed <= 1) {
 				System.out.println("Sorry, I didn't understand what you have said!");
 			} else if (seed <= 2) {
@@ -389,8 +389,18 @@ public class Robot {
 				System.out.println("Sorry! Please say that again!");
 			} else if (seed < 4.99) {
 				System.out.println("I'm sorry! I didn't catch that!");
-			} else {
+			} else if (seed < 5) {
 				System.out.println("What did you say?");
+			}else if(seed < 6){
+				System.out.println("Sorry but I don’t quite follow you.");
+			} else if(seed < 7) {
+				System.out.println("Could you say it in another way?");
+			} else if(seed < 8) {
+				System.out.println("Can you clarify that for me?");
+			} else if(seed < 9) {
+				System.out.println("Could you rephrase that?");
+			} else {
+				System.out.println("Could you elaborate on that more specifically?");
 			}
 		}
 		return re;
