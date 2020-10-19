@@ -25,6 +25,7 @@ public class Robot {
 	private int posRow;
 	private int posCol;
 	private String name = "";
+	private String userName = "";
 	private Action lastAction = Action.DO_NOTHING;
 
 	private Properties props;
@@ -32,6 +33,8 @@ public class Robot {
 
 	private Scanner sc;
 	private String OriginalString = "";
+	private boolean giveName = false;
+	private boolean takeName = false;
 
 	/**
 	 * Initializes a Robot on a specific tile in the environment.
@@ -95,36 +98,186 @@ public class Robot {
 					.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
 			// TODO: remove prettyPrint() and use the SemanticGraph to determine the action
 			// to be executed by the robot.
-			System.out.print(graph.toString());
+			//System.out.print(graph.toString());
 			IndexedWord root = graph.getFirstRoot();
 			String type = root.tag();
-			switch (type) {
-			case "JJ":
-				result = processAdjective(graph, root);
-				lastAction = result;
-				break;
-			case "VB":
-				result = processVerb(graph, root);
-				lastAction = result;
-				break;
-			case "RB":
-				result = processAdverb(graph, root);
-				lastAction = result;
-				break;
-			case "UH":
-				result = processInterjection(graph, root);
-				lastAction = result;
-				break;
-			case "JJR":
-				result = processComparativeJ(graph, root);
-				break;
-			default:
-				result = doNotUnderstand();
-				lastAction = result;
+			if (!giveName && !takeName) {
+				switch (type) {
+				case "JJ":
+					result = processAdjective(graph, root);
+					lastAction = result;
+					break;
+				case "VB":
+					result = processVerb(graph, root);
+					lastAction = result;
+					break;
+				case "RB":
+					result = processAdverb(graph, root);
+					lastAction = result;
+					break;
+				case "UH":
+					result = processInterjection(graph, root);
+					lastAction = result;
+					break;
+				case "JJR":
+					result = processComparativeJ(graph, root);
+					break;
+				case "WP":
+					result = processWhpronoun(graph, root);
+					break;
+				case "NN":
+					result = processNoun(graph, root);
+					break;
+				case "NNP":
+					result = processNNP(graph, root);
+					break;
+				default:
+					result = doNotUnderstand();
+					lastAction = result;
+				}
+			} else if (giveName) {
+				if (type.equals("NNP")) {
+					List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+					for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+						if (p.first.toString().toLowerCase().equals("nsubj")) {
+							if (p.second.originalText().toLowerCase().equals("name")) {
+								for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
+									if (p1.first.toString().equals("nmod:poss")) {
+										if (!p1.second.originalText().toLowerCase().equals("your")) {
+											giveName = false;
+											return doNotUnderstand();
+										}
+									}
+								}
+								this.name = root.originalText();
+								System.out.println("Thank you! I will be " + this.name + ".");
+								giveName = false;
+								return Action.DO_NOTHING;
+							} else if (p.second.originalText().toLowerCase().equals("you")) {
+								this.name = root.originalText();
+								System.out.println("Thank you! I will be " + this.name + ".");
+								giveName = false;
+								return Action.DO_NOTHING;
+							}
+						}
+					}
+					this.name = root.originalText();
+					System.out.println("Thank you! I will be " + this.name + ".");
+					giveName = false;
+					return Action.DO_NOTHING;
+				}
+				giveName = false;
+			} else {
+				if (type.equals("NNP")) {
+					List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+					for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+						if (p.first.toString().toLowerCase().equals("nsubj")) {
+							if (p.second.originalText().toLowerCase().equals("name")) {
+								for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
+									if (p1.first.toString().equals("nmod:poss")) {
+										if (!p1.second.originalText().toLowerCase().equals("my")) {
+											takeName = false;
+											return doNotUnderstand();
+										}
+									}
+								}
+								this.userName = root.originalText();
+								System.out.println("Thank you, " + this.userName + ".");
+								takeName = false;
+								return Action.DO_NOTHING;
+							} else if (p.second.originalText().toLowerCase().equals("i")) {
+								this.userName = root.originalText();
+								System.out.println("Thank you, " + this.userName + ".");
+								takeName = false;
+								return Action.DO_NOTHING;
+							}
+						}
+					}
+					this.userName = root.originalText();
+					System.out.println("Thank you, " + this.userName + ".");
+					takeName = false;
+					return Action.DO_NOTHING;
+				}
+				takeName = false;
 			}
-
 		}
 		return result;
+	}
+
+	private Action processNNP(SemanticGraph graph, IndexedWord root) {
+		List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+		String first = root.originalText().toLowerCase();
+		if (first.equals("random")) {
+			System.out.println("Is this OK?");
+			double seed = Math.random() * 4;
+			if (seed <= 1) {
+				return Action.MOVE_RIGHT;
+			} else if (seed <= 2) {
+				return Action.MOVE_LEFT;
+			} else if (seed <= 3) {
+				return Action.MOVE_UP;
+			} else {
+				return Action.MOVE_DOWN;
+			}
+		}
+		return doNotUnderstand();
+	}
+
+	private Action processNoun(SemanticGraph graph, IndexedWord root) {
+		List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+		String first = root.originalText().toLowerCase();
+		if (first.equals("job")) {
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.first.toString().equals("amod")) {
+					if (p.second.originalText().toLowerCase().equals("good")
+							|| p.second.originalText().toLowerCase().equals("Nice")) {
+						System.out.println("My pleasure to serve!");
+						return Action.DO_NOTHING;
+					}
+				}
+			}
+		}
+		return doNotUnderstand();
+	}
+
+	private Action processWhpronoun(SemanticGraph graph, IndexedWord root) {
+		List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+		String first = root.originalText().toLowerCase();
+		if (first.equals("what")) {
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.first.toString().equals("nsubj")) {
+					if (p.second.originalText().equals("name")) {
+						for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
+							if (p1.first.toString().equals("nmod:poss")) {
+								if (p1.second.originalText().equals("your")) {
+									if (name.equals("")) {
+										System.out.println("I don't have a name. Can you give me one?");
+										giveName = true;
+										return Action.DO_NOTHING;
+									} else {
+										System.out.println("I am " + name);
+										return Action.DO_NOTHING;
+									}
+								} else if (p1.second.originalText().equals("my")) {
+									if (userName.equals("")) {
+										System.out.println("I don't know. Can you tell me?");
+										takeName = true;
+										return Action.DO_NOTHING;
+									} else {
+										System.out.println("You are " + userName);
+										return Action.DO_NOTHING;
+									}
+								} else {
+									doNotUnderstand();
+								}
+							}
+						}
+					}
+				}
+			}
+			doNotUnderstand();
+		}
+		return Action.DO_NOTHING;
 	}
 
 	private Action processComparativeJ(SemanticGraph graph, IndexedWord root) {
@@ -154,7 +307,7 @@ public class Robot {
 				}
 			}
 		}
-
+		respond();
 		return Action.DO_NOTHING;
 	}
 
@@ -177,6 +330,8 @@ public class Robot {
 					}
 				}
 			}
+			respond();
+			return re;
 		} else if (first.equals("right")) {
 			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
 				if (!p.first.toString().equals("appos") && !p.first.toString().equals("punct")
@@ -196,6 +351,8 @@ public class Robot {
 					}
 				}
 			}
+			respond();
+			return re;
 		} else if (first.equals("left")) {
 			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
 				if (!p.first.toString().equals("appos") && !p.first.toString().equals("punct")
@@ -215,8 +372,21 @@ public class Robot {
 					}
 				}
 			}
+			respond();
+			return re;
+		} else if (first.equals("good") || first.equals("helpful") || first.equals("nice")) {
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.first.toString().equals("nsubj")) {
+					if (!p.second.originalText().toLowerCase().equals("you")
+							&& !p.second.originalText().toLowerCase().equals(this.name)) {
+						return doNotUnderstand();
+					}
+				}
+			}
+			System.out.println("Thank you very much!");
+			return re;
 		}
-		return re;
+		return doNotUnderstand();
 	}
 
 	private Action processVerb(SemanticGraph graph, IndexedWord root) {
@@ -268,45 +438,72 @@ public class Robot {
 							hasConfirmed = true;
 							break;
 						case "not":
+							respond();
 							return Action.DO_NOTHING;
 						default:
-							break;
+							return doNotUnderstand();
 						}
 					}
 				}
 			}
+			respond();
+			return re;
 		} else if (first.equals("clean")) {
 			if (s.size() == 1) {
 				return Action.CLEAN;
 			}
-		} else if(first.equals("do")) {
+			respond();
+			return re;
+		} else if (first.equals("do")) {
 			boolean again = false;
 			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
-				if(!p.first.toString().equals("discourse") && !p.first.toString().equals("punct")
-							&& !p.first.toString().equals("npmod") && !p.first.toString().equals("dep")
-							&& !p.first.toString().equals("advmod") && !p.first.toString().equals("obj")
-							&& !p.first.toString().equals("xcomp")) {
+				if (!p.first.toString().equals("discourse") && !p.first.toString().equals("punct")
+						&& !p.first.toString().equals("npmod") && !p.first.toString().equals("dep")
+						&& !p.first.toString().equals("advmod") && !p.first.toString().equals("obj")
+						&& !p.first.toString().equals("xcomp")) {
 					lastAction = doNotUnderstand();
 					return lastAction;
 				}
-				if(p.first.toString().equals("advmod") || p.first.toString().equals("xcomp")) {
-					if(p.second.originalText().equals("again")) {
+				if (p.first.toString().equals("advmod") || p.first.toString().equals("xcomp")) {
+					if (p.second.originalText().equals("again")) {
 						again = true;
 					}
-					if(p.second.originalText().equals("not")) {
+					if (p.second.originalText().equals("not")) {
 						return Action.DO_NOTHING;
 					}
 				}
-				
 			}
-			if(again) {
+			if (again) {
 				if (lastAction == Action.DO_NOTHING) {
 					System.out.println("Sorry! Your last command was not clear!");
+					return doNotUnderstand();
 				}
 				re = lastAction;
 			}
+			respond();
+			return re;
+		} else if(first.equals("undo")) {
+			switch (lastAction) {
+			case MOVE_RIGHT:
+				re = Action.MOVE_LEFT;
+				break;
+			case MOVE_LEFT:
+				re = Action.MOVE_RIGHT;
+				break;
+			case MOVE_DOWN:
+				re = Action.MOVE_UP;
+				break;
+			case MOVE_UP:
+				re = Action.MOVE_DOWN;
+				break;
+			default:
+				System.out.println("It seems to have no action that can be undoed");
+				return Action.DO_NOTHING;
+			}
+			respond();
+			return re;
 		}
-		return re;
+		return doNotUnderstand();
 	}
 
 	private Action processAdverb(SemanticGraph graph, IndexedWord root) {
@@ -327,6 +524,7 @@ public class Robot {
 				}
 				re = lastAction;
 			}
+			respond();
 			return re;
 		}
 		switch (first) {
@@ -338,16 +536,16 @@ public class Robot {
 			break;
 		case "up":
 			re = Action.MOVE_UP;
-			for(Pair<GrammaticalRelation, IndexedWord> p: s) {
-				if(p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
 					return Action.DO_NOTHING;
 				}
 			}
 			break;
 		case "down":
 			re = Action.MOVE_DOWN;
-			for(Pair<GrammaticalRelation, IndexedWord> p: s) {
-				if(p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.first.toString().equals("advmod") && p.second.originalText().equals("not")) {
 					return Action.DO_NOTHING;
 				}
 			}
@@ -359,8 +557,9 @@ public class Robot {
 			re = lastAction;
 			break;
 		default:
-			break;
+			return doNotUnderstand();
 		}
+		respond();
 		return re;
 	}
 
@@ -370,8 +569,10 @@ public class Robot {
 		String first = root.originalText().toLowerCase();
 
 		if (first.equals("right")) {
+			respond();
 			return Action.MOVE_RIGHT;
 		}
+		doNotUnderstand();
 		return Action.DO_NOTHING;
 	}
 
@@ -391,13 +592,13 @@ public class Robot {
 				System.out.println("I'm sorry! I didn't catch that!");
 			} else if (seed < 5) {
 				System.out.println("What did you say?");
-			}else if(seed < 6){
+			} else if (seed < 6) {
 				System.out.println("Sorry but I don’t quite follow you.");
-			} else if(seed < 7) {
+			} else if (seed < 7) {
 				System.out.println("Could you say it in another way?");
-			} else if(seed < 8) {
+			} else if (seed < 8) {
 				System.out.println("Can you clarify that for me?");
-			} else if(seed < 9) {
+			} else if (seed < 9) {
 				System.out.println("Could you rephrase that?");
 			} else {
 				System.out.println("Could you elaborate on that more specifically?");
@@ -426,36 +627,52 @@ public class Robot {
 		double seed = Math.random() * 5;
 		System.out.print("I think you want to ");
 		if (seed <= 1) {
-			if(string.equals("clean")) {
+			if (string.equals("clean")) {
 				System.out.println("clean!");
 				return;
 			}
 			System.out.println("move " + string + "!");
 		} else if (seed <= 2) {
-			if(string.equals("clean")) {
+			if (string.equals("clean")) {
 				System.out.println("do some cleaning!");
 				return;
 			}
 			System.out.println("turn " + string + "!");
 		} else if (seed <= 3) {
-			if(string.equals("clean")) {
+			if (string.equals("clean")) {
 				System.out.println("let me clean this place!");
 				return;
 			}
 			System.out.println("go " + string + "!");
 		} else if (seed <= 4) {
-			if(string.equals("clean")) {
+			if (string.equals("clean")) {
 				System.out.println("rinse this place!");
 				return;
 			}
 			System.out.println("let me jump " + string + "!");
 		} else {
-			if(string.equals("clean")) {
+			if (string.equals("clean")) {
 				System.out.println("wipe this!");
 				return;
 			}
 			System.out.println("let me go " + string + "!");
 		}
+	}
+
+	private void respond() {
+		double seed = Math.random() * 5;
+		if (seed <= 1) {
+			System.out.println("Got you!");
+		} else if (seed <= 2) {
+			System.out.println("OK!");
+		} else if (seed <= 3) {
+			System.out.println("My pleasure!");
+		} else if (seed <= 4) {
+			System.out.println("Roger that!");
+		} else {
+			System.out.println("On my way!");
+		}
+
 	}
 
 }
