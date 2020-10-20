@@ -12,3 +12,9 @@
   - #### Hidden Layer for XOR
   - #### N-Parity by Feedfoward Network
   - #### MNIST digit recognition by Feedfoward Network
+- ### Human Robot Collaboration Project
+  - #### Parse the sentence
+  - #### Keyword Search
+  - #### Ask for clarification
+  - #### Additional features: 
+    - #### Ask for names(Robot, Human)
