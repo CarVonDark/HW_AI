@@ -14,6 +14,8 @@
   - #### MNIST digit recognition by Feedfoward Network
 - ### Human Robot Collaboration Project
   - #### Parse the sentence
+    - ##### Move, go (right, left, up, donw) with please
+    - ##### clean with please
   - #### Keyword Search
   - #### Ask for clarification
   - #### Additional features: 
