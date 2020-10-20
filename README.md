@@ -17,4 +17,6 @@
   - #### Keyword Search
   - #### Ask for clarification
   - #### Additional features: 
-    - #### Ask for names(Robot, Human)
+    - ##### Ask for names(Robot, Human)
+    - ##### Ask for improvise
+    - ##### Undo
