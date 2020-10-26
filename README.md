@@ -3,7 +3,7 @@
 - ### Sudoku Solver 
   - #### Backtracking
   - #### Foward checking
-- ### Search/Planning route
+- ### Search/Planning Route
   - #### Breadth-first Search
   - #### Greedy Search (Not implemented)
   - #### A*
