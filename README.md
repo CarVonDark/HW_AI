@@ -13,7 +13,7 @@
   - #### N-Parity by Feedfoward Network
   - #### MNIST digit recognition by Feedfoward Network
 - ### Human Robot Collaboration Project
-  - #### Stanford Core NLP
+  - #### [Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
   - #### Parse the sentence
     - ##### Move, go (right, left, up, donw) with please
     - ##### clean with please
