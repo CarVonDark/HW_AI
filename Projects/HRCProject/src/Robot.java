@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -660,8 +661,27 @@ public class Robot {
 					}
 				}
 			}
+		} else if(first.equals("combine")) {
+			ArrayList<String> arr = new ArrayList<String>();
+			combineHelper(graph, root, s, arr);
+			System.out.println(arr.toString());
 		}
 		return doNotUnderstand();
+	}
+	
+	private void combineHelper(SemanticGraph graph, IndexedWord root, List<Pair<GrammaticalRelation, IndexedWord>> s, ArrayList<String> arr) {
+		if(s.isEmpty()) {
+			return;
+		} 
+		for(Pair<GrammaticalRelation, IndexedWord> p: s) {
+			if(p.second.originalText().toLowerCase().equals("plan")) {
+				arr.add(root.originalText());
+			} 
+			if(p.second.tag().equals("NNP")) {
+				combineHelper(graph, p.second, graph.childPairs(p.second), arr);
+				break;
+			}
+		}
 	}
 
 	private Action processAdverb(SemanticGraph graph, IndexedWord root) {
