@@ -24,8 +24,8 @@
     - ##### Find a path to row No. and column No.; Name the plan
   - #### Execute plan
   - #### Execute symmetric plan
-    - ##### right<->left
-    - ##### up<->down
+    - ##### right <->   left
+    - ##### up    <->   down
   - #### Combine plan
   - #### Additional features 
     - ##### Ask for names(Robot, Human)
