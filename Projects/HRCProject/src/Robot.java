@@ -129,17 +129,19 @@ public class Robot {
 						this.plans.put(str, this.recordingPlan);
 					}
 					this.recordingPlan = null;
+					this.recording = false;
 					this.planName = false;
 					return Action.DO_NOTHING;
 				}
 				result = getActionFromASentence(graph, root);
 				stack.push(result);
 			}
-			if (recording) {
-				this.recordingPlan.addAction(result);
-			}
 		}
-		return stack.pop();
+		Action result = stack.pop();
+		if (recording) {
+			this.recordingPlan.addAction(result);
+		}
+		return result;
 	}
 
 	private String processPlanName(SemanticGraph graph, IndexedWord root) {
@@ -457,7 +459,7 @@ public class Robot {
 		List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
 		Action re = Action.DO_NOTHING;
 		String first = root.originalText().toLowerCase();
-		if (first.equals("move") || first.equals("go")) {
+		if (first.equals("move")) {
 			boolean hasConfirmed = false;
 			for (Pair<GrammaticalRelation, IndexedWord> pair : s) {
 				if (pair.first().toString().equals("advmod")) {
@@ -631,6 +633,33 @@ public class Robot {
 			}
 			re = doNotUnderstand();
 			return re;
+		} else if (first.equals("find")) {
+			int row = posRow;
+			int col = posCol;
+			Pair<GrammaticalRelation, IndexedWord> p = s.get(0);
+			if (p.second.originalText().toLowerCase().equals("path")) {
+				Pair<GrammaticalRelation, IndexedWord> p2 = s.get(1);
+				if (p2.second.originalText().toLowerCase().equals("row")) {
+					List<Pair<GrammaticalRelation, IndexedWord>> s1 = graph.childPairs(p2.second());
+					for(Pair<GrammaticalRelation, IndexedWord> p3: s1) {
+						if(p3.first.toString().equals("nummod")) {
+							row = Integer.parseInt(p3.second.originalText());
+						} else if(p3.first.toString().equals("conj:and") && p3.second.originalText().toLowerCase().equals("column")) {
+							for(Pair<GrammaticalRelation, IndexedWord> p4: graph.childPairs(p3.second())) {
+								if(p4.first.toString().equals("nummod")) {
+									col = Integer.parseInt(p4.second.originalText());
+									findLocation(row, col);
+									this.recording = true;
+									this.planName = true;
+									this.recordingPlan = new Plan("");
+									System.out.println("Please name this plan");
+									return Action.DO_NOTHING;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		return doNotUnderstand();
 	}
@@ -800,6 +829,99 @@ public class Robot {
 			System.out.println("Roger that!");
 		} else {
 			System.out.println("On my way!");
+		}
+
+	}
+
+	private void findLocation(int row, int col) {
+		LinkedList<Position> queue = new LinkedList<Position>();
+		boolean[][] hasVisited = new boolean[env.getRows()][env.getCols()];
+		Action[][] moves = new Action[env.getRows()][env.getCols()];
+		for (int i = 0; i < hasVisited.length; i++) {
+			for (int j = 0; j < hasVisited[0].length; j++) {
+				hasVisited[i][j] = false;
+				moves[i][j] = Action.DO_NOTHING;
+			}
+		}
+		Position root = new Position(posRow, posCol);
+		boolean targetFound = false;
+		queue.add(root);
+		hasVisited[root.row][root.col] = true;
+		while (!queue.isEmpty()) {
+			Position current = queue.poll();
+			// System.out.println(current.row + " " + current.col);
+			if (env.validPos(current.row, current.col + 1)) {
+				Position next = new Position(current.row, current.col + 1);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
+					if (next.row == row && next.col == col) {
+						targetFound = true;
+						break;
+					}
+					queue.add(next);
+				}
+			}
+			if (env.validPos(current.row, current.col - 1)) {
+				Position next = new Position(current.row, current.col - 1);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row][current.col - 1] = Action.MOVE_LEFT;
+					if (next.row == row && next.col == col) {
+						targetFound = true;
+						break;
+					}
+					queue.add(next);
+				}
+			}
+			if (env.validPos(current.row + 1, current.col)) {
+				Position next = new Position(current.row + 1, current.col);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row + 1][current.col] = Action.MOVE_DOWN;
+					if (next.row == row && next.col == col) {
+						targetFound = true;
+						break;
+					}
+					queue.add(next);
+				}
+			}
+			if (env.validPos(current.row - 1, current.col)) {
+				Position next = new Position(current.row - 1, current.col);
+				if (!hasVisited[next.row][next.col]) {
+					hasVisited[next.row][next.col] = true;
+					moves[current.row - 1][current.col] = Action.MOVE_UP;
+					if (next.row == row && next.col == col) {
+						targetFound = true;
+						break;
+					}
+					queue.add(next);
+				}
+			}
+		}
+		if (targetFound) {
+			LinkedList<Action> thisTurn = new LinkedList<Action>();
+			while (!moves[row][col].equals(Action.DO_NOTHING)) {
+				thisTurn.addFirst(moves[row][col]);
+				if (moves[row][col].equals(Action.MOVE_RIGHT))
+					col--;
+				else if (moves[row][col].equals(Action.MOVE_LEFT))
+					col++;
+				else if (moves[row][col].equals(Action.MOVE_UP))
+					row++;
+				else
+					row--;
+			}
+			for (int i = 0; i < hasVisited.length; i++) {
+				for (int j = 0; j < hasVisited[0].length; j++) {
+					hasVisited[i][j] = false;
+					moves[i][j] = Action.DO_NOTHING;
+				}
+			}
+			queue.clear();
+			stack.addAll(thisTurn);
+		} else {
+			// Right now; Not possible
 		}
 
 	}
