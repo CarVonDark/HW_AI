@@ -3,7 +3,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-import java.util.Queue;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -103,13 +102,15 @@ public class Robot {
 			pipeline.annotate(annotation);
 			Action result = Action.DO_NOTHING;
 			List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
-			if (name.equals("begin record") || name.equals("start record")) {
+			if (name.trim().toLowerCase().equals("begin record") || name.trim().toLowerCase().equals("start record") || 
+					name.trim().toLowerCase().equals("begin record.") || name.trim().toLowerCase().equals("start record.")) {
 				recording = true;
 				this.recordingPlan = new Plan("");
 				respond();
 				return Action.DO_NOTHING;
 			}
-			if (name.equals("end record") || name.equals("stop record")) {
+			if (name.trim().toLowerCase().equals("end record") || name.trim().toLowerCase().equals("stop record") || 
+					name.trim().toLowerCase().equals("end record.") || name.trim().toLowerCase().equals("stop record.")) {
 				recording = false;
 				planName = true;
 				System.out.println("Please name the plan!");
@@ -119,8 +120,8 @@ public class Robot {
 				CoreMap sentence = sentences.get(0);
 				SemanticGraph graph = sentence
 						.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
-
-				System.out.print(graph.toString());
+				//print graph
+				//System.out.print(graph.toString());
 				IndexedWord root = graph.getFirstRoot();
 				String type = root.tag();
 				if (planName) {
@@ -642,12 +643,13 @@ public class Robot {
 				Pair<GrammaticalRelation, IndexedWord> p2 = s.get(1);
 				if (p2.second.originalText().toLowerCase().equals("row")) {
 					List<Pair<GrammaticalRelation, IndexedWord>> s1 = graph.childPairs(p2.second());
-					for(Pair<GrammaticalRelation, IndexedWord> p3: s1) {
-						if(p3.first.toString().equals("nummod")) {
+					for (Pair<GrammaticalRelation, IndexedWord> p3 : s1) {
+						if (p3.first.toString().equals("nummod")) {
 							row = Integer.parseInt(p3.second.originalText());
-						} else if(p3.first.toString().equals("conj:and") && p3.second.originalText().toLowerCase().equals("column")) {
-							for(Pair<GrammaticalRelation, IndexedWord> p4: graph.childPairs(p3.second())) {
-								if(p4.first.toString().equals("nummod")) {
+						} else if (p3.first.toString().equals("conj:and")
+								&& p3.second.originalText().toLowerCase().equals("column")) {
+							for (Pair<GrammaticalRelation, IndexedWord> p4 : graph.childPairs(p3.second())) {
+								if (p4.first.toString().equals("nummod")) {
 									col = Integer.parseInt(p4.second.originalText());
 									findLocation(row, col);
 									this.recording = true;
@@ -661,23 +663,40 @@ public class Robot {
 					}
 				}
 			}
-		} else if(first.equals("combine")) {
+		} else if (first.equals("combine")) {
 			ArrayList<String> arr = new ArrayList<String>();
 			combineHelper(graph, root, s, arr);
-			System.out.println(arr.toString());
+			//show plans' names
+			//System.out.println(arr.toString());
+			for (int i = arr.size() - 1; i >= 0; i--) {
+				String plan = arr.get(i);
+				if (plans.containsKey(plan)) {
+					Stack<Action> actions = plans.get(plan).getActions();
+					while (!actions.isEmpty()) {
+						stack.push(actions.pop());
+					}
+				} else {
+					System.out.println("Cannot find plan " + plan);
+					stack.clear();
+					return Action.DO_NOTHING;
+				}
+			}
+			respond();
+			return Action.DO_NOTHING;
 		}
 		return doNotUnderstand();
 	}
-	
-	private void combineHelper(SemanticGraph graph, IndexedWord root, List<Pair<GrammaticalRelation, IndexedWord>> s, ArrayList<String> arr) {
-		if(s.isEmpty()) {
+
+	private void combineHelper(SemanticGraph graph, IndexedWord root, List<Pair<GrammaticalRelation, IndexedWord>> s,
+			ArrayList<String> arr) {
+		if (s.isEmpty()) {
 			return;
-		} 
-		for(Pair<GrammaticalRelation, IndexedWord> p: s) {
-			if(p.second.originalText().toLowerCase().equals("plan")) {
+		}
+		for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+			if (p.second.originalText().toLowerCase().equals("plan")) {
 				arr.add(root.originalText());
-			} 
-			if(p.second.tag().equals("NNP")) {
+			}
+			if (p.second.tag().equals("NNP")) {
 				combineHelper(graph, p.second, graph.childPairs(p.second), arr);
 				break;
 			}
