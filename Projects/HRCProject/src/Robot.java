@@ -1,6 +1,10 @@
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.IndexedWord;
@@ -27,6 +31,8 @@ public class Robot {
 	private String name = "";
 	private String userName = "";
 	private Action lastAction = Action.DO_NOTHING;
+	private Stack<Action> stack;
+	private HashMap<String, Plan> plans;
 
 	private Properties props;
 	private StanfordCoreNLP pipeline;
@@ -35,6 +41,9 @@ public class Robot {
 	private String OriginalString = "";
 	private boolean giveName = false;
 	private boolean takeName = false;
+	private boolean recording = false;
+	private boolean planName = false;
+	private Plan recordingPlan = null;
 
 	/**
 	 * Initializes a Robot on a specific tile in the environment.
@@ -44,7 +53,8 @@ public class Robot {
 		this.env = env;
 		this.posRow = posRow;
 		this.posCol = posCol;
-
+		this.stack = new Stack<Action>();
+		this.plans = new HashMap<String, Plan>();
 		props = new Properties();
 		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse");
 		pipeline = new StanfordCoreNLP(props);
@@ -81,125 +91,179 @@ public class Robot {
 	 * functions.
 	 */
 	public Action getAction() {
-		Annotation annotation;
-		System.out.print("> ");
-		sc = new Scanner(System.in);
-		String name = sc.nextLine();
-		OriginalString = name.toLowerCase();
+		if (stack.isEmpty()) {
+			Annotation annotation;
+			System.out.print("> ");
+			sc = new Scanner(System.in);
+			String name = sc.nextLine();
+			OriginalString = name.toLowerCase();
 //	    System.out.println("got: " + name);
-		annotation = new Annotation(name);
-		pipeline.annotate(annotation);
-		Action result = Action.DO_NOTHING;
-		List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
-
-		if (sentences != null && !sentences.isEmpty()) {
-			CoreMap sentence = sentences.get(0);
-			SemanticGraph graph = sentence
-					.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
-			// TODO: remove prettyPrint() and use the SemanticGraph to determine the action
-			// to be executed by the robot.
-			//System.out.print(graph.toString());
-			IndexedWord root = graph.getFirstRoot();
-			String type = root.tag();
-			if (!giveName && !takeName) {
-				switch (type) {
-				case "JJ":
-					result = processAdjective(graph, root);
-					lastAction = result;
-					break;
-				case "VB":
-					result = processVerb(graph, root);
-					lastAction = result;
-					break;
-				case "RB":
-					result = processAdverb(graph, root);
-					lastAction = result;
-					break;
-				case "UH":
-					result = processInterjection(graph, root);
-					lastAction = result;
-					break;
-				case "JJR":
-					result = processComparativeJ(graph, root);
-					break;
-				case "WP":
-					result = processWhpronoun(graph, root);
-					break;
-				case "NN":
-					result = processNoun(graph, root);
-					break;
-				case "NNP":
-					result = processNNP(graph, root);
-					break;
-				default:
-					result = doNotUnderstand();
-					lastAction = result;
-				}
-			} else if (giveName) {
-				if (type.equals("NNP")) {
-					List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
-					for (Pair<GrammaticalRelation, IndexedWord> p : s) {
-						if (p.first.toString().toLowerCase().equals("nsubj")) {
-							if (p.second.originalText().toLowerCase().equals("name")) {
-								for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
-									if (p1.first.toString().equals("nmod:poss")) {
-										if (!p1.second.originalText().toLowerCase().equals("your")) {
-											giveName = false;
-											return doNotUnderstand();
-										}
-									}
-								}
-								this.name = root.originalText();
-								System.out.println("Thank you! I will be " + this.name + ".");
-								giveName = false;
-								return Action.DO_NOTHING;
-							} else if (p.second.originalText().toLowerCase().equals("you")) {
-								this.name = root.originalText();
-								System.out.println("Thank you! I will be " + this.name + ".");
-								giveName = false;
-								return Action.DO_NOTHING;
-							}
-						}
-					}
-					this.name = root.originalText();
-					System.out.println("Thank you! I will be " + this.name + ".");
-					giveName = false;
-					return Action.DO_NOTHING;
-				}
-				giveName = false;
-			} else {
-				if (type.equals("NNP")) {
-					List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
-					for (Pair<GrammaticalRelation, IndexedWord> p : s) {
-						if (p.first.toString().toLowerCase().equals("nsubj")) {
-							if (p.second.originalText().toLowerCase().equals("name")) {
-								for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
-									if (p1.first.toString().equals("nmod:poss")) {
-										if (!p1.second.originalText().toLowerCase().equals("my")) {
-											takeName = false;
-											return doNotUnderstand();
-										}
-									}
-								}
-								this.userName = root.originalText();
-								System.out.println("Thank you, " + this.userName + ".");
-								takeName = false;
-								return Action.DO_NOTHING;
-							} else if (p.second.originalText().toLowerCase().equals("i")) {
-								this.userName = root.originalText();
-								System.out.println("Thank you, " + this.userName + ".");
-								takeName = false;
-								return Action.DO_NOTHING;
-							}
-						}
-					}
-					this.userName = root.originalText();
-					System.out.println("Thank you, " + this.userName + ".");
-					takeName = false;
-					return Action.DO_NOTHING;
-				}
-				takeName = false;
+			annotation = new Annotation(name);
+			pipeline.annotate(annotation);
+			Action result = Action.DO_NOTHING;
+			List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			if (name.equals("begin record") || name.equals("start record")) {
+				recording = true;
+				this.recordingPlan = new Plan("");
+				respond();
+				return Action.DO_NOTHING;
 			}
+			if (name.equals("end record") || name.equals("stop record")) {
+				recording = false;
+				planName = true;
+				System.out.println("Please name the plan!");
+				return Action.DO_NOTHING;
+			}
+			if (sentences != null && !sentences.isEmpty()) {
+				CoreMap sentence = sentences.get(0);
+				SemanticGraph graph = sentence
+						.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
+
+				System.out.print(graph.toString());
+				IndexedWord root = graph.getFirstRoot();
+				String type = root.tag();
+				if (planName) {
+					String str = processPlanName(graph, root);
+					if (str != null) {
+						this.recordingPlan.setName(str);
+						this.plans.put(str, this.recordingPlan);
+					}
+					this.recordingPlan = null;
+					this.planName = false;
+					return Action.DO_NOTHING;
+				}
+				result = getActionFromASentence(graph, root);
+				stack.push(result);
+			}
+			if (recording) {
+				this.recordingPlan.addAction(result);
+			}
+		}
+		return stack.pop();
+	}
+
+	private String processPlanName(SemanticGraph graph, IndexedWord root) {
+		if (root.tag().equals("VB")) {
+			if (root.originalText().toLowerCase().equals("name")) {
+				List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+				for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+					if (p.second.tag().equals("NN")) {
+						if (!p.second.originalText().toLowerCase().equals("plan")) {
+							System.out.println("I cannot understand Plan name. Abort!");
+							return null;
+						}
+					} else if (p.second.tag().equals("NNP")) {
+						System.out.println("Add New Plan " + p.second.originalText());
+						return p.second.originalText();
+					}
+				}
+			}
+		}
+		System.out.println("I cannot understand Plan name. Abort!");
+		return null;
+	}
+
+	private Action getActionFromASentence(SemanticGraph graph, IndexedWord root) {
+		String type = root.tag();
+		Action result = Action.DO_NOTHING;
+		if (!giveName && !takeName) {
+			switch (type) {
+			case "JJ":
+				result = processAdjective(graph, root);
+				lastAction = result;
+				break;
+			case "VB":
+				result = processVerb(graph, root);
+				lastAction = result;
+				break;
+			case "RB":
+				result = processAdverb(graph, root);
+				lastAction = result;
+				break;
+			case "UH":
+				result = processInterjection(graph, root);
+				lastAction = result;
+				break;
+			case "JJR":
+				result = processComparativeJ(graph, root);
+				break;
+			case "WP":
+				result = processWhpronoun(graph, root);
+				break;
+			case "NN":
+				result = processNoun(graph, root);
+				break;
+			case "NNP":
+				result = processNNP(graph, root);
+				break;
+			default:
+				result = doNotUnderstand();
+				lastAction = result;
+			}
+		} else if (giveName) {
+			if (type.equals("NNP")) {
+				List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+				for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+					if (p.first.toString().toLowerCase().equals("nsubj")) {
+						if (p.second.originalText().toLowerCase().equals("name")) {
+							for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
+								if (p1.first.toString().equals("nmod:poss")) {
+									if (!p1.second.originalText().toLowerCase().equals("your")) {
+										giveName = false;
+										return doNotUnderstand();
+									}
+								}
+							}
+							this.name = root.originalText();
+							System.out.println("Thank you! I will be " + this.name + ".");
+							giveName = false;
+							return Action.DO_NOTHING;
+						} else if (p.second.originalText().toLowerCase().equals("you")) {
+							this.name = root.originalText();
+							System.out.println("Thank you! I will be " + this.name + ".");
+							giveName = false;
+							return Action.DO_NOTHING;
+						}
+					}
+				}
+				this.name = root.originalText();
+				System.out.println("Thank you! I will be " + this.name + ".");
+				giveName = false;
+				return Action.DO_NOTHING;
+			}
+			giveName = false;
+		} else {
+			if (type.equals("NNP")) {
+				List<Pair<GrammaticalRelation, IndexedWord>> s = graph.childPairs(root);
+				for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+					if (p.first.toString().toLowerCase().equals("nsubj")) {
+						if (p.second.originalText().toLowerCase().equals("name")) {
+							for (Pair<GrammaticalRelation, IndexedWord> p1 : graph.childPairs(p.second)) {
+								if (p1.first.toString().equals("nmod:poss")) {
+									if (!p1.second.originalText().toLowerCase().equals("my")) {
+										takeName = false;
+										return doNotUnderstand();
+									}
+								}
+							}
+							this.userName = root.originalText();
+							System.out.println("Thank you, " + this.userName + ".");
+							takeName = false;
+							return Action.DO_NOTHING;
+						} else if (p.second.originalText().toLowerCase().equals("i")) {
+							this.userName = root.originalText();
+							System.out.println("Thank you, " + this.userName + ".");
+							takeName = false;
+							return Action.DO_NOTHING;
+						}
+					}
+				}
+				this.userName = root.originalText();
+				System.out.println("Thank you, " + this.userName + ".");
+				takeName = false;
+				return Action.DO_NOTHING;
+			}
+			takeName = false;
 		}
 		return result;
 	}
@@ -316,8 +380,8 @@ public class Robot {
 		Action re = Action.DO_NOTHING;
 		String first = root.originalText().toLowerCase();
 		if (first.equals("clean")) {
-			System.out.println(s.size());
 			if (s.size() == 0) {
+				respond();
 				return Action.CLEAN;
 			}
 			if (s.size() == 1) {
@@ -326,12 +390,12 @@ public class Robot {
 				if (adverb.second.tag().equals("UH")) {
 					String str = adverb.second.originalText();
 					if (str.equals("please")) {
+						respond();
 						return Action.CLEAN;
 					}
 				}
 			}
-			respond();
-			return re;
+			return doNotUnderstand();
 		} else if (first.equals("right")) {
 			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
 				if (!p.first.toString().equals("appos") && !p.first.toString().equals("punct")
@@ -446,8 +510,7 @@ public class Robot {
 					}
 				}
 			}
-			respond();
-			return re;
+			return doNotUnderstand();
 		} else if (first.equals("clean")) {
 			if (s.size() == 1) {
 				return Action.CLEAN;
@@ -482,7 +545,7 @@ public class Robot {
 			}
 			respond();
 			return re;
-		} else if(first.equals("undo")) {
+		} else if (first.equals("undo")) {
 			switch (lastAction) {
 			case MOVE_RIGHT:
 				re = Action.MOVE_LEFT;
@@ -501,6 +564,72 @@ public class Robot {
 				return Action.DO_NOTHING;
 			}
 			respond();
+			return re;
+		} else if (first.equals("execute")) {
+			boolean sym = false;
+			for (Pair<GrammaticalRelation, IndexedWord> p : s) {
+				if (p.second().tag().equals("NNP")) {
+					if (sym) {
+						if (plans.containsKey(p.second.originalText())) {
+							Stack<Action> actions = plans.get(p.second.originalText()).getActions();
+							while (!actions.isEmpty()) {
+								Action act = actions.pop();
+								switch (act) {
+								case MOVE_RIGHT:
+									stack.push(Action.MOVE_LEFT);
+									break;
+								case MOVE_LEFT:
+									stack.push(Action.MOVE_RIGHT);
+									break;
+								case MOVE_UP:
+									stack.push(Action.MOVE_DOWN);
+									break;
+								case MOVE_DOWN:
+									stack.push(Action.MOVE_UP);
+									break;
+								default:
+									stack.push(act);
+								}
+
+							}
+							respond();
+							return Action.DO_NOTHING;
+						}
+						System.out.println("Cannot find plan " + p.second.originalText());
+						return Action.DO_NOTHING;
+					}
+					List<Pair<GrammaticalRelation, IndexedWord>> s1 = graph.childPairs(p.second());
+					for (Pair<GrammaticalRelation, IndexedWord> p2 : s1) {
+						if (p2.second().tag().equals("NN")) {
+							if (p2.second().originalText().equals("plan")) {
+								if (plans.containsKey(p.second.originalText())) {
+									Stack<Action> actions = plans.get(p.second.originalText()).getActions();
+									while (!actions.isEmpty()) {
+										stack.push(actions.pop());
+									}
+									respond();
+									return Action.DO_NOTHING;
+								}
+								System.out.println("Cannot find plan " + p.second.originalText());
+								return Action.DO_NOTHING;
+							}
+						}
+					}
+				}
+				if (p.second().tag().equals("NN")) {
+					if (p.second.originalText().toLowerCase().equals("plan")) {
+						List<Pair<GrammaticalRelation, IndexedWord>> s1 = graph.childPairs(p.second());
+						for (Pair<GrammaticalRelation, IndexedWord> p2 : s1) {
+							if (p2.second().tag().equals("JJ")) {
+								if (p2.second().originalText().equals("symmetric")) {
+									sym = true;
+								}
+							}
+						}
+					}
+				}
+			}
+			re = doNotUnderstand();
 			return re;
 		}
 		return doNotUnderstand();
@@ -675,4 +804,30 @@ public class Robot {
 
 	}
 
+}
+
+class Plan {
+	private String name;
+	private Stack<Action> actions;
+
+	public Plan(String name) {
+		this.name = name;
+		this.actions = new Stack<Action>();
+	}
+
+	public void addAction(Action action) {
+		this.actions.add(action);
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public Stack<Action> getActions() {
+		return (Stack<Action>) this.actions.clone();
+	}
 }
