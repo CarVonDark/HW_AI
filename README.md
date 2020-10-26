@@ -18,7 +18,16 @@
     - ##### clean with please
   - #### Keyword Search
   - #### Ask for clarification
-  - #### Additional features: 
+  - #### Record plans
+    - ##### Begin record; do things; end record; Name the plan
+    - ##### Find a path to row No. and column No.;Name the plan
+  - #### Execute plan
+  - #### Execute symmetric plan
+    - ##### right<->left
+    - ##### up<->down
+  - #### Combine plan
+  - #### Additional features 
     - ##### Ask for names(Robot, Human)
     - ##### Ask for improvise
     - ##### Undo
+  
