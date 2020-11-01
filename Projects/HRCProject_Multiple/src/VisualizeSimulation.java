@@ -75,7 +75,7 @@ class EnvironmentPanel extends JPanel{
 	private LinkedList<Position> targets;
 	private int timesteps, timestepsStop;
 	//TODO: Change TILESIZE if you want to enlarge the visualization.
-	public static final int TILESIZE = 15;
+	public static final int TILESIZE = 50;
 	//TODO: Change the timeStepSpeed to speed-up or slow down the animation.
 	// 500 millisecond time steps
 	private int timeStepSpeed = 100;
