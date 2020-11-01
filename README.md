@@ -31,4 +31,10 @@
     - ##### Ask for names(Robot, Human)
     - ##### Ask for improvise
     - ##### Undo
+- ### Human Robot Collaboration Project Multiple Robots Part (created a new project) 
+   - #### Each Robot goes to the nearest dirty block
+   - #### Each Robot uses bfs to plan the path to the nearest dirty block
+   - #### Robots communicate with each other to avoid same target block
+   - #### Robots could fail
+   - #### One block one robot
   
