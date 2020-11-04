@@ -1,3 +1,5 @@
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Stack;
 
@@ -15,7 +17,10 @@ public class Robot {
 	private int posCol;
 	private boolean toCleanOrNotToClean;
 	private Position headed;
+	private HashSet<Position> targets = new HashSet<Position>();
 	private Stack<Action> steps;
+	private boolean getRemoved = false;
+	private int oldNumberRobot;
 
 	/**
 	 * Initializes a Robot on a specific tile in the environment.
@@ -28,6 +33,7 @@ public class Robot {
 		this.headed = null;
 		this.toCleanOrNotToClean = false;
 		this.steps = new Stack<Action>();
+		this.oldNumberRobot = 4;
 	}
 
 	public int getPosRow() {
@@ -60,38 +66,60 @@ public class Robot {
 	 * functions.
 	 */
 	public Action getAction() {
-//		if (toCleanOrNotToClean) {
-//			toCleanOrNotToClean = false;
-//			return Action.CLEAN;
-//		}
-//		toCleanOrNotToClean = true;
-		if (steps.isEmpty()) {
-			int closestDistance = Integer.MAX_VALUE;
-			Tile[][] tiles = env.getTiles();
-			for (int i = 0; i < tiles.length; i++) {
-				for (int j = 0; j < tiles[0].length; j++) {
-					if (env.getTileStatus(i, j) == TileStatus.DIRTY) {
-						int distance = Math.abs(i - this.posRow) + Math.abs(j - this.posCol);
-						if (distance < closestDistance) {
-							headed = new Position(i, j);
-							closestDistance = distance;
-						}
-					}
-				}
+		if (oldNumberRobot != env.getRobots().size()) {
+			steps.clear();
+			bfs();
+			oldNumberRobot = env.getRobots().size();
+			if (steps.isEmpty()) {
+				return Action.DO_NOTHING;
 			}
+		}
+		if (steps.isEmpty()) {
+			updateTargets();
 			bfs();
 			if (steps.isEmpty()) {
 				return Action.DO_NOTHING;
 			}
-			return steps.pop();
-		} else {
-			return steps.pop();
+		}
+		Action re = steps.peek();
+		Position p = new Position(posRow, posCol);
+		switch (re) {
+		case MOVE_RIGHT:
+			p.col++;
+			break;
+		case MOVE_LEFT:
+			p.col--;
+			break;
+		case MOVE_DOWN:
+			p.row++;
+			break;
+		case MOVE_UP:
+			p.row--;
+			break;
+		default:
+			break;
+		}
+		for(Robot r: env.getRobots()) {
+			if(r!=this && p.row == r.posRow && p.col == r.posCol) {
+				steps.clear();
+				bfs();
+				break;
+			}
+		}
+		return steps.pop();
+
+	}
+
+	private void updateTargets() {
+		targets.clear();
+		for (Robot r : env.getRobots()) {
+			if (r.headed != null)
+				targets.add(r.headed);
 		}
 	}
 
 	private void bfs() {
-		int row = this.headed.row;
-		int col = this.headed.col;
+		Tile[][] tiles = env.getTiles();
 		LinkedList<Position> queue = new LinkedList<Position>();
 		boolean[][] hasVisited = new boolean[env.getRows()][env.getCols()];
 		Action[][] moves = new Action[env.getRows()][env.getCols()];
@@ -105,59 +133,69 @@ public class Robot {
 		boolean targetFound = false;
 		queue.add(root);
 		hasVisited[root.row][root.col] = true;
+		boolean firstStep = true;
 		while (!queue.isEmpty()) {
 			Position current = queue.poll();
 			// System.out.println(current.row + " " + current.col);
-			if (env.validPos(current.row, current.col + 1)) {
+			if (env.validPos(current.row, current.col + 1) && !(firstStep && !compareFirstStep(current.row, current.col + 1))) {
 				Position next = new Position(current.row, current.col + 1);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
-					if (next.row == row && next.col == col) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
 						targetFound = true;
+						headed = next;
 						break;
 					}
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row, current.col - 1)) {
+			if (env.validPos(current.row, current.col - 1) && !(firstStep && !compareFirstStep(current.row, current.col - 1))) {
 				Position next = new Position(current.row, current.col - 1);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row][current.col - 1] = Action.MOVE_LEFT;
-					if (next.row == row && next.col == col) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
 						targetFound = true;
+						headed = next;
 						break;
 					}
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row + 1, current.col)) {
+			if (env.validPos(current.row + 1, current.col) && !(firstStep && !compareFirstStep(current.row + 1, current.col))) {
 				Position next = new Position(current.row + 1, current.col);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row + 1][current.col] = Action.MOVE_DOWN;
-					if (next.row == row && next.col == col) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
 						targetFound = true;
+						headed = next;
 						break;
 					}
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row - 1, current.col)) {
+			if (env.validPos(current.row - 1, current.col) && !(firstStep && !compareFirstStep(current.row - 1, current.col))) {
 				Position next = new Position(current.row - 1, current.col);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row - 1][current.col] = Action.MOVE_UP;
-					if (next.row == row && next.col == col) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
 						targetFound = true;
+						headed = next;
 						break;
 					}
 					queue.add(next);
 				}
 			}
+			if(firstStep) {
+				firstStep = false;
+			}
 		}
 		if (targetFound) {
+			int row = headed.row;
+			int col = headed.col;
 			LinkedList<Action> thisTurn = new LinkedList<Action>();
 			while (!moves[row][col].equals(Action.DO_NOTHING)) {
 				thisTurn.addFirst(moves[row][col]);
@@ -182,7 +220,27 @@ public class Robot {
 		} else {
 			// Right now; Not possible
 		}
-
 	}
 
+	private boolean compareFirstStep(int row, int col) {
+		for(Robot r : env.getRobots()) {
+			if(r != this && r.posRow == row && r.posCol == col) {
+				return false;
+			}
+		}
+		return true;	
+	}
+
+	public boolean compareTargets(Position target) {
+		if (targets.isEmpty()) {
+			return false;
+		}
+		for (Position p : targets) {
+			if (p.row == target.row && p.col == target.col) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 }
