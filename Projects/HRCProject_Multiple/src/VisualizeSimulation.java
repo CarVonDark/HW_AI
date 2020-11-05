@@ -78,7 +78,7 @@ class EnvironmentPanel extends JPanel{
 	public static final int TILESIZE = 50;
 	//TODO: Change the timeStepSpeed to speed-up or slow down the animation.
 	// 500 millisecond time steps
-	private int timeStepSpeed = 100;
+	private int timeStepSpeed = 50;
 	
 	public EnvironmentPanel(Environment env, ArrayList<Robot> robots) {
 	    setPreferredSize(new Dimension(env.getCols()*TILESIZE, env.getRows()*TILESIZE));
@@ -145,11 +145,11 @@ class EnvironmentPanel extends JPanel{
 			public void updateEnvironment() {
 				timesteps++;
 				//TODO: When asked, uncomment the following 5 lines.
-//				if (robots.size() > 1 && ((int)(Math.random()*50)) == 0) robots.remove((int)(Math.random()*robots.size()));
-//				if (robots.size() == 0) {
-//					System.out.println("All robots broke. No solution found.");
-//					System.exit(0);
-//				}
+				if (((int)(Math.random()*50)) == 0) robots.remove((int)(Math.random()*robots.size()));
+				if (robots.size() == 0) {
+					System.out.println("All robots broke. No solution found.");
+					System.exit(0);
+				}
 				for(Robot robot : robots) {
 					Action action = robot.getAction();
 					int row = robot.getPosRow();

@@ -81,31 +81,31 @@ public class Robot {
 				return Action.DO_NOTHING;
 			}
 		}
-		Action re = steps.peek();
-		Position p = new Position(posRow, posCol);
-		switch (re) {
-		case MOVE_RIGHT:
-			p.col++;
-			break;
-		case MOVE_LEFT:
-			p.col--;
-			break;
-		case MOVE_DOWN:
-			p.row++;
-			break;
-		case MOVE_UP:
-			p.row--;
-			break;
-		default:
-			break;
-		}
-		for(Robot r: env.getRobots()) {
-			if(r!=this && p.row == r.posRow && p.col == r.posCol) {
-				steps.clear();
-				bfs();
-				break;
-			}
-		}
+//		Action re = steps.peek();
+//		Position p = new Position(posRow, posCol);
+//		switch (re) {
+//		case MOVE_RIGHT:
+//			p.col++;
+//			break;
+//		case MOVE_LEFT:
+//			p.col--;
+//			break;
+//		case MOVE_DOWN:
+//			p.row++;
+//			break;
+//		case MOVE_UP:
+//			p.row--;
+//			break;
+//		default:
+//			break;
+//		}
+//		for(Robot r: env.getRobots()) {
+//			if(r!=this && p.row == r.posRow && p.col == r.posCol) {
+//				steps.clear();
+//				bfs();
+//				break;
+//			}
+//		}
 		return steps.pop();
 
 	}
@@ -137,12 +137,14 @@ public class Robot {
 		while (!queue.isEmpty()) {
 			Position current = queue.poll();
 			// System.out.println(current.row + " " + current.col);
-			if (env.validPos(current.row, current.col + 1) && !(firstStep && !compareFirstStep(current.row, current.col + 1))) {
+			if (env.validPos(current.row, current.col + 1)
+					&& !(firstStep && !compareFirstStep(current.row, current.col + 1))) {
 				Position next = new Position(current.row, current.col + 1);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row][current.col + 1] = Action.MOVE_RIGHT;
-					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY 
+							&& !compareTargets(next)) {
 						targetFound = true;
 						headed = next;
 						break;
@@ -150,12 +152,14 @@ public class Robot {
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row, current.col - 1) && !(firstStep && !compareFirstStep(current.row, current.col - 1))) {
+			if (env.validPos(current.row, current.col - 1) 
+					&& !(firstStep && !compareFirstStep(current.row, current.col - 1))) {
 				Position next = new Position(current.row, current.col - 1);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row][current.col - 1] = Action.MOVE_LEFT;
-					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY 
+							&& !compareTargets(next)) {
 						targetFound = true;
 						headed = next;
 						break;
@@ -163,12 +167,14 @@ public class Robot {
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row + 1, current.col) && !(firstStep && !compareFirstStep(current.row + 1, current.col))) {
+			if (env.validPos(current.row + 1, current.col) 
+					&& !(firstStep && !compareFirstStep(current.row + 1, current.col))) {
 				Position next = new Position(current.row + 1, current.col);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row + 1][current.col] = Action.MOVE_DOWN;
-					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY 
+							&& !compareTargets(next)) {
 						targetFound = true;
 						headed = next;
 						break;
@@ -176,12 +182,14 @@ public class Robot {
 					queue.add(next);
 				}
 			}
-			if (env.validPos(current.row - 1, current.col) && !(firstStep && !compareFirstStep(current.row - 1, current.col))) {
+			if (env.validPos(current.row - 1, current.col) 
+					&& !(firstStep && !compareFirstStep(current.row - 1, current.col))) {
 				Position next = new Position(current.row - 1, current.col);
 				if (!hasVisited[next.row][next.col]) {
 					hasVisited[next.row][next.col] = true;
 					moves[current.row - 1][current.col] = Action.MOVE_UP;
-					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY && !compareTargets(next)) {
+					if (tiles[next.row][next.col].getStatus() == TileStatus.DIRTY 
+							&& !compareTargets(next)) {
 						targetFound = true;
 						headed = next;
 						break;
