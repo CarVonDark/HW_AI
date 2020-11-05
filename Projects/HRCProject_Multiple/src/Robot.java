@@ -81,31 +81,31 @@ public class Robot {
 				return Action.DO_NOTHING;
 			}
 		}
-//		Action re = steps.peek();
-//		Position p = new Position(posRow, posCol);
-//		switch (re) {
-//		case MOVE_RIGHT:
-//			p.col++;
-//			break;
-//		case MOVE_LEFT:
-//			p.col--;
-//			break;
-//		case MOVE_DOWN:
-//			p.row++;
-//			break;
-//		case MOVE_UP:
-//			p.row--;
-//			break;
-//		default:
-//			break;
-//		}
-//		for(Robot r: env.getRobots()) {
-//			if(r!=this && p.row == r.posRow && p.col == r.posCol) {
-//				steps.clear();
-//				bfs();
-//				break;
-//			}
-//		}
+		Action re = steps.peek();
+		Position p = new Position(posRow, posCol);
+		switch (re) {
+		case MOVE_RIGHT:
+			p.col++;
+			break;
+		case MOVE_LEFT:
+			p.col--;
+			break;
+		case MOVE_DOWN:
+			p.row++;
+			break;
+		case MOVE_UP:
+			p.row--;
+			break;
+		default:
+			break;
+		}
+		for(Robot r: env.getRobots()) {
+			if(r!=this && p.row == r.posRow && p.col == r.posCol) {
+				steps.clear();
+				bfs();
+				break;
+			}
+		}
 		return steps.pop();
 
 	}
